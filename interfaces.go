@@ -3,6 +3,8 @@ package tradingstore
 import (
 	"context"
 	"database/sql"
+
+	"github.com/dromara/carbon/v2"
 )
 
 type StoreInterface interface {
@@ -72,6 +74,7 @@ type PriceInterface interface {
 	SetOpen(open string) PriceInterface
 
 	GetTime() string
+	GetTimeCarbon() carbon.Carbon
 	SetTime(time string) PriceInterface
 
 	GetVolume() string
@@ -88,6 +91,10 @@ type PriceQueryInterface interface {
 	HasCountOnly() bool
 	IsCountOnly() bool
 	SetCountOnly(countOnly bool) PriceQueryInterface
+
+	HasTime() bool
+	Time() string
+	SetTime(createdAt string) PriceQueryInterface
 
 	HasTimeGte() bool
 	TimeGte() string

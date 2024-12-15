@@ -23,7 +23,7 @@ func NewPrice() PriceInterface {
 	return o
 }
 
-func NewPriceFromExistingData(data map[string]string) *Price {
+func NewPriceFromExistingData(data map[string]string) PriceInterface {
 	o := &Price{}
 	o.Hydrate(data)
 	return o
