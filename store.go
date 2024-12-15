@@ -1,30 +1,46 @@
 package tradingstore
 
 import (
+	"context"
 	"database/sql"
 	"errors"
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/dromara/carbon/v2"
+	"github.com/gouniverse/base/database"
 	"github.com/gouniverse/sb"
-	"github.com/mingrammer/cfmt"
 	"github.com/samber/lo"
+	"github.com/spf13/cast"
 )
 
-// const DISCOUNT_TABLE_NAME = "shop_discount"
+// == INTERFACE ===============================================================
 
 var _ StoreInterface = (*Store)(nil) // verify it extends the interface
 
 type Store struct {
-	priceTableName     string
-	db                 *sql.DB
-	dbDriverName       string
+	// priceTableName is the name of the price table
+	priceTableName string
+
+	// db is the underlying database connection
+	db *sql.DB
+
+	// dbDriverName is the name of the database driver
+	dbDriverName string
+
+	// automigrateEnabled enables auto migrate
 	automigrateEnabled bool
-	debugEnabled       bool
+
+	// debugEnabled enables or disables the debug mode
+	debugEnabled bool
+
+	// sqlLogger is the sql logger used when debug mode is enabled
+	sqlLogger *slog.Logger
 }
+
+// PUBLIC METHODS ============================================================
 
 // AutoMigrate auto migrate
 func (store *Store) AutoMigrate() error {
@@ -33,11 +49,15 @@ func (store *Store) AutoMigrate() error {
 	_, err := store.db.Exec(sql)
 
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
 	return nil
+}
+
+// DB returns the underlying database connection
+func (st *Store) DB() *sql.DB {
+	return st.db
 }
 
 // EnableDebug - enables the debug option
@@ -45,22 +65,28 @@ func (st *Store) EnableDebug(debug bool) {
 	st.debugEnabled = debug
 }
 
-func (st *Store) PriceCount(options PriceQueryOptions) (int64, error) {
-	options.CountOnly = true
-	q := st.priceQuery(options)
+func (store *Store) PriceCount(ctx context.Context, options PriceQueryInterface) (int64, error) {
+	options.SetCountOnly(true)
 
-	sqlStr, _, errSql := q.Limit(1).Select(goqu.COUNT(goqu.Star()).As("count")).ToSQL()
+	q, _, err := store.priceQuery(options)
+
+	if err != nil {
+		return -1, err
+	}
+
+	sqlStr, sqlParams, errSql := q.Prepared(true).
+		Limit(1).
+		Select(goqu.COUNT(goqu.Star()).As("count")).
+		ToSQL()
 
 	if errSql != nil {
 		return -1, nil
 	}
 
-	if st.debugEnabled {
-		log.Println(sqlStr)
-	}
+	store.logSql("count", sqlStr, sqlParams...)
 
-	db := sb.NewDatabase(st.db, st.dbDriverName)
-	mapped, err := db.SelectToMapString(sqlStr)
+	mapped, err := database.SelectToMapString(store.toQuerableContext(ctx), sqlStr, sqlParams...)
+
 	if err != nil {
 		return -1, err
 	}
@@ -81,8 +107,8 @@ func (st *Store) PriceCount(options PriceQueryOptions) (int64, error) {
 	return i, nil
 }
 
-func (store *Store) PriceExists(options PriceQueryOptions) (bool, error) {
-	count, err := store.PriceCount(options)
+func (store *Store) PriceExists(ctx context.Context, options PriceQueryInterface) (bool, error) {
+	count, err := store.PriceCount(ctx, options)
 
 	if err != nil {
 		return false, err
@@ -91,13 +117,13 @@ func (store *Store) PriceExists(options PriceQueryOptions) (bool, error) {
 	return count > 0, nil
 }
 
-func (store *Store) PriceCreate(price *Price) error {
+func (store *Store) PriceCreate(ctx context.Context, price PriceInterface) error {
 
 	data := price.Data()
 
-	data["time"] = price.TimeCarbon().ToDateTimeString(carbon.UTC)
+	data[COLUMN_TIME] = price.GetTimeCarbon().ToDateTimeString(carbon.UTC)
 
-	sqlStr, params, errSql := goqu.Dialect(store.dbDriverName).
+	sqlStr, sqlParams, errSql := goqu.Dialect(store.dbDriverName).
 		Insert(store.priceTableName).
 		Prepared(true).
 		Rows(data).
@@ -107,11 +133,9 @@ func (store *Store) PriceCreate(price *Price) error {
 		return errSql
 	}
 
-	if store.debugEnabled {
-		cfmt.Infoln(sqlStr)
-	}
+	store.logSql("create", sqlStr, sqlParams...)
 
-	_, err := store.db.Exec(sqlStr, params...)
+	_, err := database.Execute(store.toQuerableContext(ctx), sqlStr, sqlParams...)
 
 	if err != nil {
 		return err
@@ -122,20 +146,20 @@ func (store *Store) PriceCreate(price *Price) error {
 	return nil
 }
 
-func (store *Store) PriceDelete(price *Price) error {
+func (store *Store) PriceDelete(ctx context.Context, price PriceInterface) error {
 	if price == nil {
 		return errors.New("price is nil")
 	}
 
-	return store.PriceDeleteByID(price.ID())
+	return store.PriceDeleteByID(ctx, price.ID())
 }
 
-func (store *Store) PriceDeleteByID(id string) error {
+func (store *Store) PriceDeleteByID(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.New("price id is empty")
 	}
 
-	sqlStr, params, errSql := goqu.Dialect(store.dbDriverName).
+	sqlStr, sqlParams, errSql := goqu.Dialect(store.dbDriverName).
 		Delete(store.priceTableName).
 		Prepared(true).
 		Where(goqu.C("id").Eq(id)).
@@ -145,82 +169,65 @@ func (store *Store) PriceDeleteByID(id string) error {
 		return errSql
 	}
 
-	if store.debugEnabled {
-		log.Println(sqlStr)
-	}
+	store.logSql("delete", sqlStr, sqlParams...)
 
-	_, err := store.db.Exec(sqlStr, params...)
+	_, err := database.Execute(store.toQuerableContext(ctx), sqlStr, sqlParams...)
 
 	return err
 }
 
-func (store *Store) PriceFindByID(id string) (*Price, error) {
+func (store *Store) PriceFindByID(ctx context.Context, id string) (PriceInterface, error) {
 	if id == "" {
 		return nil, errors.New("price id is empty")
 	}
 
-	list, err := store.PriceList(PriceQueryOptions{
-		ID:    id,
-		Limit: 1,
-	})
+	query := NewPriceQuery().SetID(id).SetLimit(1)
+
+	list, err := store.PriceList(ctx, query)
 
 	if err != nil {
 		return nil, err
 	}
 
 	if len(list) > 0 {
-		return &list[0], nil
+		return list[0], nil
 	}
 
 	return nil, nil
 }
 
-func (store *Store) PriceList(options PriceQueryOptions) ([]Price, error) {
-	q := store.priceQuery(options)
+func (store *Store) PriceList(ctx context.Context, options PriceQueryInterface) ([]PriceInterface, error) {
+	q, columns, err := store.priceQuery(options)
 
-	if len(options.Columns) > 0 {
-		q = q.Select(options.Columns[0])
-		if len(options.Columns) > 1 {
-			for _, column := range options.Columns[1:] {
-				q = q.SelectAppend(goqu.C(column))
-			}
-		}
-	} else {
-		q = q.Select(goqu.Star())
-	}
+	q = q.Prepared(true).Select(columns...)
 
-	sqlStr, _, errSql := q.ToSQL()
+	sqlStr, sqlParams, errSql := q.ToSQL()
 
 	if errSql != nil {
-		return []Price{}, errSql
+		return []PriceInterface{}, errSql
 	}
 
-	if store.debugEnabled {
-		cfmt.Infoln(sqlStr)
-	}
+	store.logSql("list", sqlStr, sqlParams...)
 
-	db := sb.NewDatabase(store.db, store.dbDriverName)
-	modelMaps, err := db.SelectToMapString(sqlStr)
+	modelMaps, err := database.SelectToMapString(store.toQuerableContext(ctx), sqlStr, sqlParams...)
 	if err != nil {
-		return []Price{}, err
+		return []PriceInterface{}, err
 	}
 
-	list := []Price{}
+	list := []PriceInterface{}
 
 	lo.ForEach(modelMaps, func(modelMap map[string]string, index int) {
 		model := NewPriceFromExistingData(modelMap)
-		list = append(list, *model)
+		list = append(list, model)
 	})
 
 	return list, nil
 }
 
-func (store *Store) PriceUpdate(price *Price) error {
+func (store *Store) PriceUpdate(ctx context.Context, price PriceInterface) error {
 	if price == nil {
 		return errors.New("price is nil")
 	}
-
-	// price.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 
 	dataChanged := price.DataChanged()
 
@@ -230,7 +237,7 @@ func (store *Store) PriceUpdate(price *Price) error {
 		return nil
 	}
 
-	sqlStr, params, errSql := goqu.Dialect(store.dbDriverName).
+	sqlStr, sqlParams, errSql := goqu.Dialect(store.dbDriverName).
 		Update(store.priceTableName).
 		Prepared(true).
 		Set(dataChanged).
@@ -241,72 +248,95 @@ func (store *Store) PriceUpdate(price *Price) error {
 		return errSql
 	}
 
-	if store.debugEnabled {
-		cfmt.Infoln(sqlStr)
-	}
+	store.logSql("update", sqlStr, sqlParams...)
 
-	_, err := store.db.Exec(sqlStr, params...)
+	_, err := database.Execute(store.toQuerableContext(ctx), sqlStr, sqlParams...)
 
 	price.MarkAsNotDirty()
 
 	return err
 }
 
-func (store *Store) priceQuery(options PriceQueryOptions) *goqu.SelectDataset {
+func (store *Store) priceQuery(options PriceQueryInterface) (selectDataset *goqu.SelectDataset, columns []any, err error) {
+	if options == nil {
+		return nil, nil, errors.New("price options is nil")
+	}
+
+	if err := options.Validate(); err != nil {
+		return nil, nil, err
+	}
+
 	q := goqu.Dialect(store.dbDriverName).From(store.priceTableName)
 
-	if options.ID != "" {
-		q = q.Where(goqu.C(COLUMN_ID).Eq(options.ID))
+	if options.HasID() {
+		q = q.Where(goqu.C(COLUMN_ID).Eq(options.ID()))
 	}
 
-	if options.Time != "" {
-		q = q.Where(goqu.C(COLUMN_TIME).Eq(options.Time))
+	if options.HasIDIn() {
+		q = q.Where(goqu.C(COLUMN_ID).In(options.IDIn()))
 	}
 
-	if options.TimeGte != "" {
-		q = q.Where(goqu.C(COLUMN_TIME).Gte(options.TimeGte))
+	if options.HasTime() {
+		q = q.Where(goqu.C(COLUMN_TIME).Eq(options.Time()))
 	}
 
-	if options.TimeLte != "" {
-		q = q.Where(goqu.C(COLUMN_TIME).Lte(options.TimeLte))
+	if options.HasTimeGte() && options.HasTimeLte() {
+		q = q.Where(
+			goqu.C(COLUMN_TIME).Gte(options.TimeGte()),
+			goqu.C(COLUMN_TIME).Lte(options.TimeLte()),
+		)
+	} else if options.HasTimeGte() {
+		q = q.Where(goqu.C(COLUMN_TIME).Gte(options.TimeGte()))
+	} else if options.HasTimeLte() {
+		q = q.Where(goqu.C(COLUMN_TIME).Lte(options.TimeLte()))
 	}
 
-	if !options.CountOnly {
-		if options.Limit > 0 {
-			q = q.Limit(uint(options.Limit))
+	if !options.IsCountOnly() {
+		if options.HasLimit() {
+			q = q.Limit(cast.ToUint(options.Limit()))
 		}
 
-		if options.Offset > 0 {
-			q = q.Offset(uint(options.Offset))
+		if options.HasOffset() {
+			q = q.Offset(cast.ToUint(options.Offset()))
 		}
 	}
 
-	sortOrder := "desc"
-	if options.SortOrder != "" {
-		sortOrder = options.SortOrder
-	}
-
-	if options.SortOrder != "" {
-		if strings.EqualFold(sortOrder, sb.ASC) {
-			q = q.Order(goqu.I(options.OrderBy).Asc())
+	if options.HasOrderBy() {
+		sort := lo.Ternary(options.HasSortDirection(), options.SortDirection(), sb.DESC)
+		if strings.EqualFold(sort, sb.ASC) {
+			q = q.Order(goqu.I(options.OrderBy()).Asc())
 		} else {
-			q = q.Order(goqu.I(options.OrderBy).Desc())
+			q = q.Order(goqu.I(options.OrderBy()).Desc())
 		}
 	}
 
-	return q
+	columns = []any{}
+
+	for _, column := range options.Columns() {
+		columns = append(columns, column)
+	}
+
+	return q, columns, nil
 }
 
-type PriceQueryOptions struct {
-	Columns   []string
-	ID        string
-	IDIn      string
-	Time      string
-	TimeGte   string
-	TimeLte   string
-	Offset    int
-	Limit     int
-	SortOrder string
-	OrderBy   string
-	CountOnly bool
+// == Private methods
+
+// logSql logs sql to the sql logger, if debug mode is enabled
+func (store *Store) logSql(sqlOperationType string, sql string, params ...interface{}) {
+	if !store.debugEnabled {
+		return
+	}
+
+	if store.sqlLogger != nil {
+		store.sqlLogger.Debug("sql: "+sqlOperationType, slog.String("sql", sql), slog.Any("params", params))
+	}
+}
+
+// toQuerableContext converts the context to a QueryableContext
+func (store *Store) toQuerableContext(ctx context.Context) database.QueryableContext {
+	if database.IsQueryableContext(ctx) {
+		return ctx.(database.QueryableContext)
+	}
+
+	return database.Context(ctx, store.db)
 }
