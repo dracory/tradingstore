@@ -2,20 +2,12 @@ package tradingstore
 
 import "errors"
 
-// type PriceQueryOptions struct {
-// 	Columns   []string
-// 	ID        string
-// 	IDIn      string
-// 	Time      string
-// 	TimeGte   string
-// 	TimeLte   string
-// 	Offset    int
-// 	Limit     int
-// 	SortOrder string
-// 	OrderBy   string
-// 	CountOnly bool
-// }
+// PriceQuery is a shortcut for NewPriceQuery
+func PriceQuery() PriceQueryInterface {
+	return NewPriceQuery()
+}
 
+// NewPriceQuery creates a new price query
 func NewPriceQuery() PriceQueryInterface {
 	return &priceQueryImplementation{
 		properties: make(map[string]any),

@@ -18,6 +18,9 @@ type Store struct {
 	// priceTableName is the name of the price table
 	priceTableName string
 
+	// instrumentTableName is the name of the instrument table
+	instrumentTableName string
+
 	// db is the underlying database connection
 	db *sql.DB
 
@@ -43,6 +46,14 @@ func (store *Store) AutoMigrate() error {
 	sql := store.sqlTablePriceCreate()
 
 	_, err := store.db.Exec(sql)
+
+	if err != nil {
+		return err
+	}
+
+	sql = store.sqlTableInstrumentCreate()
+
+	_, err = store.db.Exec(sql)
 
 	if err != nil {
 		return err

@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cast"
 )
 
+// PriceCount returns the number of prices based on the given query options
 func (store *Store) PriceCount(ctx context.Context, options PriceQueryInterface) (int64, error) {
 	options.SetCountOnly(true)
 
@@ -56,6 +57,7 @@ func (store *Store) PriceCount(ctx context.Context, options PriceQueryInterface)
 	return i, nil
 }
 
+// PriceExists returns true if a price exists based on the given query options
 func (store *Store) PriceExists(ctx context.Context, options PriceQueryInterface) (bool, error) {
 	count, err := store.PriceCount(ctx, options)
 
@@ -66,6 +68,7 @@ func (store *Store) PriceExists(ctx context.Context, options PriceQueryInterface
 	return count > 0, nil
 }
 
+// PriceCreate creates a new price
 func (store *Store) PriceCreate(ctx context.Context, price PriceInterface) error {
 
 	data := price.Data()
@@ -95,6 +98,7 @@ func (store *Store) PriceCreate(ctx context.Context, price PriceInterface) error
 	return nil
 }
 
+// PriceDelete deletes a price
 func (store *Store) PriceDelete(ctx context.Context, price PriceInterface) error {
 	if price == nil {
 		return errors.New("price is nil")
@@ -103,6 +107,7 @@ func (store *Store) PriceDelete(ctx context.Context, price PriceInterface) error
 	return store.PriceDeleteByID(ctx, price.ID())
 }
 
+// PriceDeleteByID deletes a price by its ID
 func (store *Store) PriceDeleteByID(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.New("price id is empty")
@@ -125,6 +130,7 @@ func (store *Store) PriceDeleteByID(ctx context.Context, id string) error {
 	return err
 }
 
+// PriceFindByID returns a price by its ID
 func (store *Store) PriceFindByID(ctx context.Context, id string) (PriceInterface, error) {
 	if id == "" {
 		return nil, errors.New("price id is empty")
@@ -145,8 +151,13 @@ func (store *Store) PriceFindByID(ctx context.Context, id string) (PriceInterfac
 	return nil, nil
 }
 
+// PriceList returns a list of prices based on the given query options
 func (store *Store) PriceList(ctx context.Context, options PriceQueryInterface) ([]PriceInterface, error) {
 	q, columns, err := store.priceQuery(options)
+
+	if err != nil {
+		return []PriceInterface{}, err
+	}
 
 	q = q.Prepared(true).Select(columns...)
 
@@ -206,6 +217,7 @@ func (store *Store) PriceUpdate(ctx context.Context, price PriceInterface) error
 	return err
 }
 
+// priceQuery returns a query for prices based on the given query options
 func (store *Store) priceQuery(options PriceQueryInterface) (selectDataset *goqu.SelectDataset, columns []any, err error) {
 	if options == nil {
 		return nil, nil, errors.New("price options is nil")

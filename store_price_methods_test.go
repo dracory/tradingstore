@@ -8,20 +8,10 @@ import (
 )
 
 func TestStorePriceCreate(t *testing.T) {
-	db := initDB(":memory:")
-
-	store, err := NewStore(NewStoreOptions{
-		DB:                 db,
-		PriceTableName:     "forex_price_create",
-		AutomigrateEnabled: true,
-	})
+	store, err := initStore()
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
-	}
-
-	if store == nil {
-		t.Fatal("unexpected nil store")
 	}
 
 	price := NewPrice().
@@ -40,20 +30,10 @@ func TestStorePriceCreate(t *testing.T) {
 }
 
 func TestStorePriceFindByID(t *testing.T) {
-	db := initDB(":memory:")
-
-	store, err := NewStore(NewStoreOptions{
-		DB:                 db,
-		PriceTableName:     "forex_price_create",
-		AutomigrateEnabled: true,
-	})
+	store, err := initStore()
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
-	}
-
-	if store == nil {
-		t.Fatal("unexpected nil store")
 	}
 
 	price := NewPrice().
