@@ -1,8 +1,8 @@
-# Trading Store <a href="https://gitpod.io/#https://github.com/gouniverse/tradingstore" style="float:right:"><img src="https://gitpod.io/button/open-in-gitpod.svg" alt="Open in Gitpod" loading="lazy"></a>
+# Trading Store <a href="https://gitpod.io/#https://github.com/dracory/tradingstore" style="float:right:"><img src="https://gitpod.io/button/open-in-gitpod.svg" alt="Open in Gitpod" loading="lazy"></a>
 
-[![Tests Status](https://github.com/gouniverse/tradingstore/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/gouniverse/tradingstore/actions/workflows/tests.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gouniverse/tradingstore)](https://goreportcard.com/report/github.com/gouniverse/tradingstore)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/gouniverse/tradingstore)](https://pkg.go.dev/github.com/gouniverse/tradingstore)
+[![Tests Status](https://github.com/dracory/tradingstore/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/dracory/tradingstore/actions/workflows/tests.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/dracory/tradingstore)](https://goreportcard.com/report/github.com/dracory/tradingstore)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/dracory/tradingstore)](https://pkg.go.dev/github.com/dracory/tradingstore)
 
 TradingStore is a Go package for storing and managing financial market data, including OHLCV (Open, High, Low, Close, Volume) price data and instrument definitions.
 
