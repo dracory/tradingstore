@@ -79,7 +79,7 @@ func (price *Price) GetTime() string {
 	return price.Get(COLUMN_TIME)
 }
 
-func (price *Price) GetTimeCarbon() carbon.Carbon {
+func (price *Price) GetTimeCarbon() *carbon.Carbon {
 	return carbon.Parse(price.GetTime(), carbon.UTC)
 }
 

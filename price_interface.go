@@ -34,7 +34,7 @@ type PriceInterface interface {
 	SetOpen(open string) PriceInterface
 
 	GetTime() string
-	GetTimeCarbon() carbon.Carbon
+	GetTimeCarbon() *carbon.Carbon
 	SetTime(time string) PriceInterface
 
 	GetVolume() string
