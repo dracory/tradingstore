@@ -15,10 +15,10 @@ import (
 )
 
 // PriceCount returns the number of prices based on the given query options
-func (store *Store) PriceCount(ctx context.Context, options PriceQueryInterface) (int64, error) {
+func (store *Store) PriceCount(ctx context.Context, symbol string, exchange string, timeframe string, options PriceQueryInterface) (int64, error) {
 	options.SetCountOnly(true)
 
-	q, _, err := store.priceQuery(options)
+	q, _, err := store.priceQuery(symbol, exchange, timeframe, options)
 
 	if err != nil {
 		return -1, err
@@ -58,8 +58,8 @@ func (store *Store) PriceCount(ctx context.Context, options PriceQueryInterface)
 }
 
 // PriceExists returns true if a price exists based on the given query options
-func (store *Store) PriceExists(ctx context.Context, options PriceQueryInterface) (bool, error) {
-	count, err := store.PriceCount(ctx, options)
+func (store *Store) PriceExists(ctx context.Context, symbol string, exchange string, timeframe string, options PriceQueryInterface) (bool, error) {
+	count, err := store.PriceCount(ctx, symbol, exchange, timeframe, options)
 
 	if err != nil {
 		return false, err
@@ -69,14 +69,14 @@ func (store *Store) PriceExists(ctx context.Context, options PriceQueryInterface
 }
 
 // PriceCreate creates a new price
-func (store *Store) PriceCreate(ctx context.Context, price PriceInterface) error {
+func (store *Store) PriceCreate(ctx context.Context, symbol string, exchange string, timeframe string, price PriceInterface) error {
 
 	data := price.Data()
 
-	data[COLUMN_TIME] = price.GetTimeCarbon().ToDateTimeString(carbon.UTC)
+	data[COLUMN_TIME] = price.TimeCarbon().ToDateTimeString(carbon.UTC)
 
 	sqlStr, sqlParams, errSql := goqu.Dialect(store.dbDriverName).
-		Insert(store.priceTableName).
+		Insert(store.PriceTableName(symbol, exchange, timeframe)).
 		Prepared(true).
 		Rows(data).
 		ToSQL()
@@ -99,22 +99,22 @@ func (store *Store) PriceCreate(ctx context.Context, price PriceInterface) error
 }
 
 // PriceDelete deletes a price
-func (store *Store) PriceDelete(ctx context.Context, price PriceInterface) error {
+func (store *Store) PriceDelete(ctx context.Context, symbol string, exchange string, timeframe string, price PriceInterface) error {
 	if price == nil {
 		return errors.New("price is nil")
 	}
 
-	return store.PriceDeleteByID(ctx, price.ID())
+	return store.PriceDeleteByID(ctx, symbol, exchange, timeframe, price.ID())
 }
 
 // PriceDeleteByID deletes a price by its ID
-func (store *Store) PriceDeleteByID(ctx context.Context, id string) error {
+func (store *Store) PriceDeleteByID(ctx context.Context, symbol string, exchange string, timeframe string, id string) error {
 	if id == "" {
 		return errors.New("price id is empty")
 	}
 
 	sqlStr, sqlParams, errSql := goqu.Dialect(store.dbDriverName).
-		Delete(store.priceTableName).
+		Delete(store.PriceTableName(symbol, exchange, timeframe)).
 		Prepared(true).
 		Where(goqu.C("id").Eq(id)).
 		ToSQL()
@@ -131,14 +131,14 @@ func (store *Store) PriceDeleteByID(ctx context.Context, id string) error {
 }
 
 // PriceFindByID returns a price by its ID
-func (store *Store) PriceFindByID(ctx context.Context, id string) (PriceInterface, error) {
-	if id == "" {
+func (store *Store) PriceFindByID(ctx context.Context, symbol string, exchange string, timeframe string, priceID string) (PriceInterface, error) {
+	if priceID == "" {
 		return nil, errors.New("price id is empty")
 	}
 
-	query := NewPriceQuery().SetID(id).SetLimit(1)
+	query := NewPriceQuery().SetID(priceID).SetLimit(1)
 
-	list, err := store.PriceList(ctx, query)
+	list, err := store.PriceList(ctx, symbol, exchange, timeframe, query)
 
 	if err != nil {
 		return nil, err
@@ -152,8 +152,8 @@ func (store *Store) PriceFindByID(ctx context.Context, id string) (PriceInterfac
 }
 
 // PriceList returns a list of prices based on the given query options
-func (store *Store) PriceList(ctx context.Context, options PriceQueryInterface) ([]PriceInterface, error) {
-	q, columns, err := store.priceQuery(options)
+func (store *Store) PriceList(ctx context.Context, symbol string, exchange string, timeframe string, options PriceQueryInterface) ([]PriceInterface, error) {
+	q, columns, err := store.priceQuery(symbol, exchange, timeframe, options)
 
 	if err != nil {
 		return []PriceInterface{}, err
@@ -184,7 +184,7 @@ func (store *Store) PriceList(ctx context.Context, options PriceQueryInterface) 
 	return list, nil
 }
 
-func (store *Store) PriceUpdate(ctx context.Context, price PriceInterface) error {
+func (store *Store) PriceUpdate(ctx context.Context, symbol string, exchange string, timeframe string, price PriceInterface) error {
 	if price == nil {
 		return errors.New("price is nil")
 	}
@@ -198,7 +198,7 @@ func (store *Store) PriceUpdate(ctx context.Context, price PriceInterface) error
 	}
 
 	sqlStr, sqlParams, errSql := goqu.Dialect(store.dbDriverName).
-		Update(store.priceTableName).
+		Update(store.PriceTableName(symbol, exchange, timeframe)).
 		Prepared(true).
 		Set(dataChanged).
 		Where(goqu.C(COLUMN_ID).Eq(price.ID())).
@@ -218,7 +218,7 @@ func (store *Store) PriceUpdate(ctx context.Context, price PriceInterface) error
 }
 
 // priceQuery returns a query for prices based on the given query options
-func (store *Store) priceQuery(options PriceQueryInterface) (selectDataset *goqu.SelectDataset, columns []any, err error) {
+func (store *Store) priceQuery(symbol string, exchange string, timeframe string, options PriceQueryInterface) (selectDataset *goqu.SelectDataset, columns []any, err error) {
 	if options == nil {
 		return nil, nil, errors.New("price options is nil")
 	}
@@ -227,7 +227,7 @@ func (store *Store) priceQuery(options PriceQueryInterface) (selectDataset *goqu
 		return nil, nil, err
 	}
 
-	q := goqu.Dialect(store.dbDriverName).From(store.priceTableName)
+	q := goqu.Dialect(store.dbDriverName).From(store.PriceTableName(symbol, exchange, timeframe))
 
 	if options.HasID() {
 		q = q.Where(goqu.C(COLUMN_ID).Eq(options.ID()))

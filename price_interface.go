@@ -17,27 +17,27 @@ type PriceInterface interface {
 	ID() string
 	SetID(id string) PriceInterface
 
-	GetClose() string
-	GetCloseFloat() float64
+	Close() string
+	CloseFloat() float64
 	SetClose(close string) PriceInterface
 
-	GetHigh() string
-	GetHighFloat() float64
+	High() string
+	HighFloat() float64
 	SetHigh(high string) PriceInterface
 
-	GetLow() string
-	GetLowFloat() float64
+	Low() string
+	LowFloat() float64
 	SetLow(low string) PriceInterface
 
-	GetOpen() string
-	GetOpenFloat() float64
+	Open() string
+	OpenFloat() float64
 	SetOpen(open string) PriceInterface
 
-	GetTime() string
-	GetTimeCarbon() *carbon.Carbon
+	Time() string
+	TimeCarbon() *carbon.Carbon
 	SetTime(time string) PriceInterface
 
-	GetVolume() string
-	GetVolumeFloat() float64
+	Volume() string
+	VolumeFloat() float64
 	SetVolume(volume string) PriceInterface
 }

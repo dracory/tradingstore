@@ -1,6 +1,7 @@
 package tradingstore
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"os"
@@ -25,7 +26,7 @@ func initStore() (StoreInterface, error) {
 
 	store, err := NewStore(NewStoreOptions{
 		DB:                   db,
-		PriceTableName:       "price_create",
+		PriceTableNamePrefix: "price_",
 		InstrumentTableName:  "instrument",
 		UseMultipleExchanges: true,
 		AutomigrateEnabled:   true,
@@ -39,5 +40,48 @@ func initStore() (StoreInterface, error) {
 		return nil, errors.New("unexpected nil store")
 	}
 
+	err = seedInstruments(store)
+	if err != nil {
+		return nil, err
+	}
+
+	err = store.AutoMigratePrices(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
 	return store, nil
+}
+
+func seedInstruments(store StoreInterface) error {
+	timeframes := TIMEFRAME_1_MINUTE + "," + TIMEFRAME_5_MINUTES + "," + TIMEFRAME_15_MINUTES + "," + TIMEFRAME_30_MINUTES + "," + TIMEFRAME_1_HOUR + "," + TIMEFRAME_4_HOURS + "," + TIMEFRAME_1_DAY
+
+	data := []map[string]string{
+		{
+			"symbol":      "AAPL",
+			"exchange":    "NASDAQ",
+			"asset_class": ASSET_CLASS_STOCK,
+			"timeframes":  timeframes,
+		},
+		{
+			"symbol":      "MSFT",
+			"exchange":    "NASDAQ",
+			"asset_class": ASSET_CLASS_STOCK,
+			"timeframes":  timeframes,
+		},
+	}
+
+	for _, data := range data {
+		instrument := NewInstrument().
+			SetSymbol(data["symbol"]).
+			SetExchange(data["exchange"]).
+			SetAssetClass(data["asset_class"])
+
+		err := store.InstrumentCreate(context.Background(), instrument)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
