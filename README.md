@@ -32,34 +32,33 @@ TradingStore provides powerful query interfaces for retrieving price and instrum
 
 ```go
 // Get all prices for AAPL in June 2023
-prices, err := store.PriceList(ctx, store.PriceQuery(ctx).
-    SetSymbol("AAPL").
-    SetTimeGte("2023-06-01T00:00:00Z").
-    SetTimeLte("2023-06-30T23:59:59Z"))
+prices, err := store.PriceList(ctx, "AAPL", "NASDAQ", TIMEFRAME_1_MINUTE,
+    NewPriceQuery().
+        SetTimeGte("2023-06-01T00:00:00Z").
+        SetTimeLte("2023-06-30T23:59:59Z"))
 
 // Count prices matching criteria
-count, err := store.PriceCount(ctx, store.PriceQuery(ctx).
-    SetSymbol("AAPL"))
+count, err := store.PriceCount(ctx, "AAPL", "NASDAQ", TIMEFRAME_1_MINUTE,
+    NewPriceQuery())
 
 // Check if specific price data exists
-exists, err := store.PriceExists(ctx, store.PriceQuery(ctx).
-    SetSymbol("AAPL").
-    SetTime("2023-06-01T16:00:00Z"))
+exists, err := store.PriceExists(ctx, "AAPL", "NASDAQ", TIMEFRAME_1_MINUTE,
+    NewPriceQuery().SetTime("2023-06-01T16:00:00Z"))
 ```
 
 ### Instrument Queries
 
 ```go
 // Get all stock instruments
-instruments, err := store.InstrumentList(ctx, store.InstrumentQuery(ctx).
-    SetAssetClass("STOCK"))
+instruments, err := store.InstrumentList(ctx, NewInstrumentQuery().
+    SetAssetClass(ASSET_CLASS_STOCK))
 
 // Find instruments with names containing "Apple"
-instruments, err := store.InstrumentList(ctx, store.InstrumentQuery(ctx).
+instruments, err := store.InstrumentList(ctx, NewInstrumentQuery().
     SetSymbolLike("Apple"))
 
 // Count instruments on NASDAQ
-count, err := store.InstrumentCount(ctx, store.InstrumentQuery(ctx).
+count, err := store.InstrumentCount(ctx, NewInstrumentQuery().
     SetExchange("NASDAQ"))
 ```
 
@@ -88,7 +87,7 @@ func main() {
 
     // Create a new trading store
     store, err := tradingstore.NewStore(tradingstore.NewStoreOptions{
-        PriceTableNamePrefix: "price",
+        PriceTableNamePrefix: "price_",
         InstrumentTableName:  "instruments",
         UseMultipleExchanges: false,
         DB:                  db,
@@ -101,20 +100,26 @@ func main() {
     ctx := context.Background()
 
     // Create a new instrument
-    instrument := store.NewInstrument().
+    instrument := NewInstrument().
         SetSymbol("AAPL").
         SetExchange("NASDAQ").
         SetAssetClass("STOCK").
-        SetDescription("Apple Inc.")
+        SetDescription("Apple Inc.").
+        SetTimeframes([]string{TIMEFRAME_1_MINUTE, TIMEFRAME_5_MINUTES, TIMEFRAME_1_HOUR, TIMEFRAME_1_DAY})
 
     if err := store.InstrumentCreate(ctx, instrument); err != nil {
         log.Fatal(err)
     }
 
+    // Create pricing tables
+    err := store.AutomigratePrices()
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
     // Create a price entry
-    price := store.NewPrice().
-        SetSymbol("AAPL").
-        SetExchange("NASDAQ").
+    price := NewPrice().
         SetTime("2023-06-01T16:00:00Z").
         SetOpen("180.25").
         SetHigh("182.50").
@@ -122,13 +127,12 @@ func main() {
         SetClose("181.75").
         SetVolume("34250000")
 
-    if err := store.PriceCreate(ctx, price); err != nil {
+    if err := store.PriceCreate(ctx, "AAPL", "NASDAQ", TIMEFRAME_1_MINUTE, price); err != nil {
         log.Fatal(err)
     }
 
     // Query prices
-    prices, err := store.PriceList(ctx, store.PriceQuery(ctx).
-        SetSymbol("AAPL").
+    prices, err := store.PriceList(ctx, "AAPL", "NASDAQ", TIMEFRAME_1_MINUTE, NewPriceQuery().
         SetTimeGte("2023-06-01T00:00:00Z").
         SetTimeLte("2023-06-30T23:59:59Z"))
     if err != nil {
@@ -153,6 +157,8 @@ classDiagram
     class StoreInterface {
         <<interface>>
         +AutoMigrate() error
+        +AutoMigrateInstruments(ctx) error
+        +AutoMigratePrices(ctx) error
         +DB() *sql.DB
         +EnableDebug(bool)
         +InstrumentCount(ctx, options) (int64, error)
@@ -163,14 +169,14 @@ classDiagram
         +InstrumentFindByID(ctx, id) (InstrumentInterface, error)
         +InstrumentList(ctx, options) ([]InstrumentInterface, error)
         +InstrumentUpdate(ctx, instrument) error
-        +PriceCount(ctx, options) (int64, error)
-        +PriceCreate(ctx, price) error
-        +PriceDelete(ctx, price) error
-        +PriceDeleteByID(ctx, id) error
-        +PriceExists(ctx, options) (bool, error)
-        +PriceFindByID(ctx, id) (PriceInterface, error)
-        +PriceList(ctx, options) ([]PriceInterface, error)
-        +PriceUpdate(ctx, price) error
+        +PriceCount(ctx, symbol, exchange, timeframe, options) (int64, error)
+        +PriceCreate(ctx, symbol, exchange, timeframe, price) error
+        +PriceDelete(ctx, symbol, exchange, timeframe, price) error
+        +PriceDeleteByID(ctx, symbol, exchange, timeframe, id) error
+        +PriceExists(ctx, symbol, exchange, timeframe, options) (bool, error)
+        +PriceFindByID(ctx, symbol, exchange, timeframe, id) (PriceInterface, error)
+        +PriceList(ctx, symbol, exchange, timeframe, options) ([]PriceInterface, error)
+        +PriceUpdate(ctx, symbol, exchange, timeframe, price) error
     }
 
     class Store {
@@ -183,8 +189,11 @@ classDiagram
         -useMultipleExchanges bool
         -sqlLogger *slog.Logger
         +AutoMigrate() error
+        +AutoMigrateInstruments(ctx) error
+        +AutoMigratePrices(ctx) error
         +DB() *sql.DB
         +EnableDebug(bool)
+        +PriceTableName(symbol, exchange, timeframe) string
     }
 
     StoreInterface <|.. Store
@@ -250,14 +259,16 @@ classDiagram
         +MarkAsNotDirty()
         +ID() string
         +SetID(id) InstrumentInterface
-        +GetSymbol() string
+        +Symbol() string
         +SetSymbol(symbol) InstrumentInterface
-        +GetExchange() string
+        +Exchange() string
         +SetExchange(exchange) InstrumentInterface
-        +GetAssetClass() string
+        +AssetClass() string
         +SetAssetClass(assetClass) InstrumentInterface
-        +GetDescription() string
+        +Description() string
         +SetDescription(description) InstrumentInterface
+        +Timeframes() []string
+        +SetTimeframes(timeframes) InstrumentInterface
     }
 
     class Instrument {
