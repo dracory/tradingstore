@@ -23,4 +23,7 @@ type InstrumentInterface interface {
 
 	GetDescription() string
 	SetDescription(description string) InstrumentInterface
+
+	GetTimeframes() []string
+	SetTimeframes(timeframes []string) InstrumentInterface
 }

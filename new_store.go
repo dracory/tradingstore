@@ -11,10 +11,16 @@ import (
 type NewStoreOptions struct {
 	PriceTableName      string
 	InstrumentTableName string
-	DB                  *sql.DB
-	DbDriverName        string
-	AutomigrateEnabled  bool
-	DebugEnabled        bool
+
+	// UseMultipleExchanges is used to create a new price table for each exchange
+	// if false, the price table will be created with the exchange name as the table name (i.e. price_btc_usdt)
+	// if true, the price table will be created with the exchange name as the table name (i.e. price_btc_binance_usdt)
+	UseMultipleExchanges bool
+
+	DB                 *sql.DB
+	DbDriverName       string
+	AutomigrateEnabled bool
+	DebugEnabled       bool
 }
 
 // NewStore creates a new trading store

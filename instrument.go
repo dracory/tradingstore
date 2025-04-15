@@ -1,6 +1,8 @@
 package tradingstore
 
 import (
+	"strings"
+
 	"github.com/gouniverse/dataobject"
 	"github.com/gouniverse/uid"
 )
@@ -93,12 +95,25 @@ func (i *Instrument) SetCreatedAt(createdAt string) *Instrument {
 	return i
 }
 
-func (i *Instrument) DeletedAt() string {
-	return i.Get(COLUMN_DELETED_AT)
+func (i *Instrument) SoftDeletedAt() string {
+	return i.Get(COLUMN_SOFT_DELETED_AT)
 }
 
-func (i *Instrument) SetDeletedAt(deletedAt string) *Instrument {
-	i.Set(COLUMN_DELETED_AT, deletedAt)
+func (i *Instrument) SetSoftDeletedAt(softDeletedAt string) *Instrument {
+	i.Set(COLUMN_SOFT_DELETED_AT, softDeletedAt)
+	return i
+}
+
+func (i *Instrument) GetTimeframes() []string {
+	timeframes := i.Get(COLUMN_TIMEFRAMES)
+	if timeframes == "" {
+		return []string{}
+	}
+	return strings.Split(timeframes, ",")
+}
+
+func (i *Instrument) SetTimeframes(timeframes []string) InstrumentInterface {
+	i.Set(COLUMN_TIMEFRAMES, strings.Join(timeframes, ","))
 	return i
 }
 
