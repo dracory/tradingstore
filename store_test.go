@@ -24,10 +24,11 @@ func initStore() (StoreInterface, error) {
 	db := initDB(":memory:")
 
 	store, err := NewStore(NewStoreOptions{
-		DB:                  db,
-		PriceTableName:      "price_create",
-		InstrumentTableName: "instrument",
-		AutomigrateEnabled:  true,
+		DB:                   db,
+		PriceTableName:       "price_create",
+		InstrumentTableName:  "instrument",
+		UseMultipleExchanges: true,
+		AutomigrateEnabled:   true,
 	})
 
 	if err != nil {

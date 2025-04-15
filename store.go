@@ -21,6 +21,11 @@ type Store struct {
 	// instrumentTableName is the name of the instrument table
 	instrumentTableName string
 
+	// useMultipleExchanges enables or disables the use of multiple exchanges
+	// if true, a price table will be created for each exchange, i.e price_eurusd_binance_1min
+	// if false, a price table will be created for the default exchange, i.e price_eurusd_1min
+	useMultipleExchanges bool
+
 	// db is the underlying database connection
 	db *sql.DB
 
@@ -43,7 +48,7 @@ type Store struct {
 
 // AutoMigrate auto migrate
 func (store *Store) AutoMigrate() error {
-	sql := store.sqlTablePriceCreate()
+	sql := store.sqlTableInstrumentCreate()
 
 	_, err := store.db.Exec(sql)
 
@@ -51,12 +56,32 @@ func (store *Store) AutoMigrate() error {
 		return err
 	}
 
-	sql = store.sqlTableInstrumentCreate()
+	return nil
+}
 
-	_, err = store.db.Exec(sql)
+// AutoMigrate auto migrate
+func (store *Store) AutoMigratePrices(ctx context.Context) error {
+	instruments, err := store.InstrumentList(ctx, InstrumentQuery())
 
 	if err != nil {
 		return err
+	}
+
+	sqls := []string{}
+	for _, instrument := range instruments {
+		timeframes := instrument.GetTimeframes()
+		for _, timeframe := range timeframes {
+			sql := store.sqlTablePriceCreate(instrument.GetSymbol(), instrument.GetExchange(), timeframe)
+			sqls = append(sqls, sql)
+		}
+	}
+
+	for _, sql := range sqls {
+		_, err := store.db.Exec(sql)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -25,7 +25,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/gouniverse/tradingstore"
+    "github.com/dracory/tradingstore"
     _ "modernc.org/sqlite"
 )
 
@@ -101,14 +101,22 @@ classDiagram
         +AutoMigrate() error
         +DB() *sql.DB
         +EnableDebug(bool)
-        +NewPrice() PriceInterface
-        +NewInstrument() InstrumentInterface
-        +PriceCreate(ctx, price) error
-        +PriceFindByID(ctx, id) PriceInterface
-        +PriceQuery(ctx) PriceQueryInterface
+        +InstrumentCount(ctx, options) (int64, error)
         +InstrumentCreate(ctx, instrument) error
-        +InstrumentFindByID(ctx, id) InstrumentInterface
-        +InstrumentQuery(ctx) InstrumentQueryInterface
+        +InstrumentDelete(ctx, instrument) error
+        +InstrumentDeleteByID(ctx, id) error
+        +InstrumentExists(ctx, options) (bool, error)
+        +InstrumentFindByID(ctx, id) (InstrumentInterface, error)
+        +InstrumentList(ctx, options) ([]InstrumentInterface, error)
+        +InstrumentUpdate(ctx, instrument) error
+        +PriceCount(ctx, options) (int64, error)
+        +PriceCreate(ctx, price) error
+        +PriceDelete(ctx, price) error
+        +PriceDeleteByID(ctx, id) error
+        +PriceExists(ctx, options) (bool, error)
+        +PriceFindByID(ctx, id) (PriceInterface, error)
+        +PriceList(ctx, options) ([]PriceInterface, error)
+        +PriceUpdate(ctx, price) error
     }
 
     class Store {
@@ -127,6 +135,8 @@ classDiagram
     class PriceInterface {
         <<interface>>
         +Data() map[string]string
+        +DataChanged() map[string]string
+        +MarkAsNotDirty()
         +ID() string
         +SetID(id) PriceInterface
         +GetOpen() string
@@ -145,13 +155,15 @@ classDiagram
         +GetVolumeFloat() float64
         +SetVolume(volume) PriceInterface
         +GetTime() string
-        +GetTimeCarbon() carbon.Carbon
+        +GetTimeCarbon() *carbon.Carbon
         +SetTime(time) PriceInterface
     }
 
     class InstrumentInterface {
         <<interface>>
         +Data() map[string]string
+        +DataChanged() map[string]string
+        +MarkAsNotDirty()
         +ID() string
         +SetID(id) InstrumentInterface
         +GetSymbol() string
@@ -165,11 +177,11 @@ classDiagram
     }
 
     class Price {
-        +DataObject
+        +dataobject.DataObject
     }
 
     class Instrument {
-        +DataObject
+        +dataobject.DataObject
     }
 
     class PriceQueryInterface {
@@ -196,10 +208,6 @@ classDiagram
     StoreInterface <|.. Store
     PriceInterface <|.. Price
     InstrumentInterface <|.. Instrument
-    Store --> PriceInterface : creates
-    Store --> InstrumentInterface : creates
-    Store --> PriceQueryInterface : provides
-    Store --> InstrumentQueryInterface : provides
 ```
 
 ## License
