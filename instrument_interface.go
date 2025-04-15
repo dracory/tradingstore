@@ -9,21 +9,21 @@ type InstrumentInterface interface {
 	// methods
 
 	// setters and getters
+	AssetClass() string
+	SetAssetClass(assetClass string) InstrumentInterface
+
+	Exchange() string
+	SetExchange(exchange string) InstrumentInterface
+
+	Description() string
+	SetDescription(description string) InstrumentInterface
+
 	ID() string
 	SetID(id string) InstrumentInterface
 
-	GetSymbol() string
+	Symbol() string
 	SetSymbol(symbol string) InstrumentInterface
 
-	GetExchange() string
-	SetExchange(exchange string) InstrumentInterface
-
-	GetAssetClass() string
-	SetAssetClass(assetClass string) InstrumentInterface
-
-	GetDescription() string
-	SetDescription(description string) InstrumentInterface
-
-	GetTimeframes() []string
+	Timeframes() []string
 	SetTimeframes(timeframes []string) InstrumentInterface
 }

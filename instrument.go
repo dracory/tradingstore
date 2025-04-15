@@ -7,121 +7,113 @@ import (
 	"github.com/gouniverse/uid"
 )
 
-// CREATE TABLE financial_instruments (
-// 	id INT AUTO_INCREMENT PRIMARY KEY,
-// 	asset_class VARCHAR(10), -- 'CURRENCY', 'STOCK', 'INDEX'
-// 	symbol VARCHAR(20),
-// 	isin VARCHAR(12),
-// 	exchange VARCHAR(20)
-// );
-
 // == CLASS ====================================================================
 
-// Instrument represents a trading instrument data object for storing in the database
-type Instrument struct {
+// Instrument represents a financial instrument data object
+type instrumentImplementation struct {
 	dataobject.DataObject
 }
 
 // == CONSTRUCTORS =============================================================
 
 func NewInstrument() InstrumentInterface {
-	o := (&Instrument{}).
+	o := (&instrumentImplementation{}).
 		SetID(uid.HumanUid())
 
 	return o
 }
 
 func NewInstrumentFromExistingData(data map[string]string) InstrumentInterface {
-	o := &Instrument{}
+	o := &instrumentImplementation{}
 	o.Hydrate(data)
 	return o
 }
 
-var _ InstrumentInterface = (*Instrument)(nil)
+var _ InstrumentInterface = (*instrumentImplementation)(nil)
 
 // == SETTERS & GETTERS ========================================================
 
-func (instrument *Instrument) ID() string {
+func (instrument *instrumentImplementation) ID() string {
 	return instrument.Get(COLUMN_ID)
 }
 
-func (instrument *Instrument) SetID(id string) InstrumentInterface {
+func (instrument *instrumentImplementation) SetID(id string) InstrumentInterface {
 	instrument.Set(COLUMN_ID, id)
 	return instrument
 }
 
-func (instrument *Instrument) GetSymbol() string {
+func (instrument *instrumentImplementation) Symbol() string {
 	return instrument.Get(COLUMN_SYMBOL)
 }
 
-func (instrument *Instrument) SetSymbol(symbol string) InstrumentInterface {
+func (instrument *instrumentImplementation) SetSymbol(symbol string) InstrumentInterface {
 	instrument.Set(COLUMN_SYMBOL, symbol)
 	return instrument
 }
 
-func (instrument *Instrument) GetExchange() string {
+func (instrument *instrumentImplementation) Exchange() string {
 	return instrument.Get(COLUMN_EXCHANGE)
 }
 
-func (instrument *Instrument) SetExchange(exchange string) InstrumentInterface {
+func (instrument *instrumentImplementation) SetExchange(exchange string) InstrumentInterface {
 	instrument.Set(COLUMN_EXCHANGE, exchange)
 	return instrument
 }
 
-func (instrument *Instrument) GetAssetClass() string {
+func (instrument *instrumentImplementation) AssetClass() string {
 	return instrument.Get(COLUMN_ASSET_CLASS)
 }
 
-func (instrument *Instrument) SetAssetClass(assetClass string) InstrumentInterface {
+func (instrument *instrumentImplementation) SetAssetClass(assetClass string) InstrumentInterface {
 	instrument.Set(COLUMN_ASSET_CLASS, assetClass)
 	return instrument
 }
 
-func (instrument *Instrument) GetDescription() string {
-	return instrument.Get("description")
+func (instrument *instrumentImplementation) Description() string {
+	return instrument.Get(COLUMN_DESCRIPTION)
 }
 
-func (instrument *Instrument) SetDescription(description string) InstrumentInterface {
-	instrument.Set("description", description)
+func (instrument *instrumentImplementation) SetDescription(description string) InstrumentInterface {
+	instrument.Set(COLUMN_DESCRIPTION, description)
 	return instrument
 }
 
-func (i *Instrument) CreatedAt() string {
-	return i.Get(COLUMN_CREATED_AT)
+func (instrument *instrumentImplementation) CreatedAt() string {
+	return instrument.Get(COLUMN_CREATED_AT)
 }
 
-func (i *Instrument) SetCreatedAt(createdAt string) *Instrument {
-	i.Set(COLUMN_CREATED_AT, createdAt)
-	return i
+func (instrument *instrumentImplementation) SetCreatedAt(createdAt string) InstrumentInterface {
+	instrument.Set(COLUMN_CREATED_AT, createdAt)
+	return instrument
 }
 
-func (i *Instrument) SoftDeletedAt() string {
-	return i.Get(COLUMN_SOFT_DELETED_AT)
+func (instrument *instrumentImplementation) SoftDeletedAt() string {
+	return instrument.Get(COLUMN_SOFT_DELETED_AT)
 }
 
-func (i *Instrument) SetSoftDeletedAt(softDeletedAt string) *Instrument {
-	i.Set(COLUMN_SOFT_DELETED_AT, softDeletedAt)
-	return i
+func (instrument *instrumentImplementation) SetSoftDeletedAt(softDeletedAt string) InstrumentInterface {
+	instrument.Set(COLUMN_SOFT_DELETED_AT, softDeletedAt)
+	return instrument
 }
 
-func (i *Instrument) GetTimeframes() []string {
-	timeframes := i.Get(COLUMN_TIMEFRAMES)
+func (instrument *instrumentImplementation) Timeframes() []string {
+	timeframes := instrument.Get(COLUMN_TIMEFRAMES)
 	if timeframes == "" {
 		return []string{}
 	}
 	return strings.Split(timeframes, ",")
 }
 
-func (i *Instrument) SetTimeframes(timeframes []string) InstrumentInterface {
-	i.Set(COLUMN_TIMEFRAMES, strings.Join(timeframes, ","))
-	return i
+func (instrument *instrumentImplementation) SetTimeframes(timeframes []string) InstrumentInterface {
+	instrument.Set(COLUMN_TIMEFRAMES, strings.Join(timeframes, ","))
+	return instrument
 }
 
-func (i *Instrument) UpdatedAt() string {
-	return i.Get(COLUMN_UPDATED_AT)
+func (instrument *instrumentImplementation) UpdatedAt() string {
+	return instrument.Get(COLUMN_UPDATED_AT)
 }
 
-func (i *Instrument) SetUpdatedAt(updatedAt string) *Instrument {
-	i.Set(COLUMN_UPDATED_AT, updatedAt)
-	return i
+func (instrument *instrumentImplementation) SetUpdatedAt(updatedAt string) InstrumentInterface {
+	instrument.Set(COLUMN_UPDATED_AT, updatedAt)
+	return instrument
 }

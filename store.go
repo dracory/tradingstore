@@ -15,8 +15,8 @@ import (
 var _ StoreInterface = (*Store)(nil) // verify it extends the interface
 
 type Store struct {
-	// priceTableName is the name of the price table
-	priceTableName string
+	// priceTableNamePrefix is the prefix of the price table
+	priceTableNamePrefix string
 
 	// instrumentTableName is the name of the instrument table
 	instrumentTableName string
@@ -46,8 +46,8 @@ type Store struct {
 // == PUBLIC METHODS
 // ============================================================================
 
-// AutoMigrate auto migrate
-func (store *Store) AutoMigrate() error {
+// AutoMigrateInstruments auto migrates the instrument table
+func (store *Store) AutoMigrateInstruments(ctx context.Context) error {
 	sql := store.sqlTableInstrumentCreate()
 
 	_, err := store.db.Exec(sql)
@@ -59,7 +59,9 @@ func (store *Store) AutoMigrate() error {
 	return nil
 }
 
-// AutoMigrate auto migrate
+// AutoMigratePrices auto migrates the price tables
+// It will create a price table for each instrument and each timeframe
+// You will need to call this method when you create a new instrument
 func (store *Store) AutoMigratePrices(ctx context.Context) error {
 	instruments, err := store.InstrumentList(ctx, InstrumentQuery())
 
@@ -69,9 +71,10 @@ func (store *Store) AutoMigratePrices(ctx context.Context) error {
 
 	sqls := []string{}
 	for _, instrument := range instruments {
-		timeframes := instrument.GetTimeframes()
+		timeframes := instrument.Timeframes()
+
 		for _, timeframe := range timeframes {
-			sql := store.sqlTablePriceCreate(instrument.GetSymbol(), instrument.GetExchange(), timeframe)
+			sql := store.sqlTablePriceCreate(instrument.Symbol(), instrument.Exchange(), timeframe)
 			sqls = append(sqls, sql)
 		}
 	}

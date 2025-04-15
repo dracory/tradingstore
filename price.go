@@ -33,12 +33,12 @@ func NewPriceFromExistingData(data map[string]string) PriceInterface {
 
 // == SETTERS & GETTERS ========================================================
 
-func (price *Price) GetClose() string {
+func (price *Price) Close() string {
 	return price.Get(COLUMN_CLOSE)
 }
 
-func (price *Price) GetCloseFloat() float64 {
-	return cast.ToFloat64(price.GetClose())
+func (price *Price) CloseFloat() float64 {
+	return cast.ToFloat64(price.Close())
 }
 
 func (price *Price) SetClose(close string) PriceInterface {
@@ -46,12 +46,12 @@ func (price *Price) SetClose(close string) PriceInterface {
 	return price
 }
 
-func (price *Price) GetHigh() string {
+func (price *Price) High() string {
 	return price.Get(COLUMN_HIGH)
 }
 
-func (price *Price) GetHighFloat() float64 {
-	return cast.ToFloat64(price.GetHigh())
+func (price *Price) HighFloat() float64 {
+	return cast.ToFloat64(price.High())
 }
 
 func (price *Price) SetHigh(high string) PriceInterface {
@@ -68,6 +68,32 @@ func (price *Price) SetID(id string) PriceInterface {
 	return price
 }
 
+func (price *Price) Low() string {
+	return price.Get(COLUMN_LOW)
+}
+
+func (price *Price) LowFloat() float64 {
+	return cast.ToFloat64(price.Low())
+}
+
+func (price *Price) SetLow(low string) PriceInterface {
+	price.Set(COLUMN_LOW, low)
+	return price
+}
+
+func (price *Price) Open() string {
+	return price.Get(COLUMN_OPEN)
+}
+
+func (price *Price) OpenFloat() float64 {
+	return cast.ToFloat64(price.Open())
+}
+
+func (price *Price) SetOpen(open string) PriceInterface {
+	price.Set(COLUMN_OPEN, open)
+	return price
+}
+
 // Time returns the time as a Iso8601 formatted string.
 //
 // Parameters:
@@ -75,12 +101,12 @@ func (price *Price) SetID(id string) PriceInterface {
 //
 // Returns:
 // - string: the time in ISO8601 format
-func (price *Price) GetTime() string {
+func (price *Price) Time() string {
 	return price.Get(COLUMN_TIME)
 }
 
-func (price *Price) GetTimeCarbon() *carbon.Carbon {
-	return carbon.Parse(price.GetTime(), carbon.UTC)
+func (price *Price) TimeCarbon() *carbon.Carbon {
+	return carbon.Parse(price.Time(), carbon.UTC)
 }
 
 // SetTime sets the time for a Price, must be in UTC.
@@ -97,38 +123,12 @@ func (price *Price) SetTime(timeUtc string) PriceInterface {
 	return price
 }
 
-func (price *Price) GetLow() string {
-	return price.Get(COLUMN_LOW)
-}
-
-func (price *Price) GetLowFloat() float64 {
-	return cast.ToFloat64(price.GetLow())
-}
-
-func (price *Price) SetLow(low string) PriceInterface {
-	price.Set(COLUMN_LOW, low)
-	return price
-}
-
-func (price *Price) GetOpen() string {
-	return price.Get(COLUMN_OPEN)
-}
-
-func (price *Price) GetOpenFloat() float64 {
-	return cast.ToFloat64(price.GetOpen())
-}
-
-func (price *Price) SetOpen(open string) PriceInterface {
-	price.Set(COLUMN_OPEN, open)
-	return price
-}
-
-func (price *Price) GetVolume() string {
+func (price *Price) Volume() string {
 	return price.Get(COLUMN_VOLUME)
 }
 
-func (price *Price) GetVolumeFloat() float64 {
-	return cast.ToFloat64(price.GetVolume())
+func (price *Price) VolumeFloat() float64 {
+	return cast.ToFloat64(price.Volume())
 }
 
 func (price *Price) SetVolume(volume string) PriceInterface {

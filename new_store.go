@@ -1,6 +1,7 @@
 package tradingstore
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
@@ -9,24 +10,35 @@ import (
 
 // NewStoreOptions define the options for creating a new tradingstore
 type NewStoreOptions struct {
-	PriceTableName      string
+	// PriceTableNamePrefix is the prefix of the price table
+	PriceTableNamePrefix string
+
+	// InstrumentTableName is the name of the instrument table
 	InstrumentTableName string
 
 	// UseMultipleExchanges is used to create a new price table for each exchange
-	// if false, the price table will be created with the exchange name as the table name (i.e. price_btc_usdt)
+	// if false, the price table will be created without the exchange name as the table name (i.e. price_btc_usdt)
 	// if true, the price table will be created with the exchange name as the table name (i.e. price_btc_binance_usdt)
 	UseMultipleExchanges bool
 
-	DB                 *sql.DB
-	DbDriverName       string
+	// DB is the underlying database connection
+	DB *sql.DB
+
+	// DbDriverName is the name of the database driver
+	DbDriverName string
+
+	// AutomigrateEnabled is used to auto migrate the instrument table
+	// Note: You will need to call AutoMigratePrices after creating a new instrument
 	AutomigrateEnabled bool
-	DebugEnabled       bool
+
+	// DebugEnabled is used to enable debug mode
+	DebugEnabled bool
 }
 
 // NewStore creates a new trading store
 func NewStore(opts NewStoreOptions) (StoreInterface, error) {
-	if opts.PriceTableName == "" {
-		return nil, errors.New("trading store: PriceTableName is required")
+	if opts.PriceTableNamePrefix == "" {
+		return nil, errors.New("trading store: PriceTableNamePrefix is required")
 	}
 
 	if opts.InstrumentTableName == "" {
@@ -42,16 +54,17 @@ func NewStore(opts NewStoreOptions) (StoreInterface, error) {
 	}
 
 	store := &Store{
-		priceTableName:      opts.PriceTableName,
-		instrumentTableName: opts.InstrumentTableName,
-		automigrateEnabled:  opts.AutomigrateEnabled,
-		db:                  opts.DB,
-		dbDriverName:        opts.DbDriverName,
-		debugEnabled:        opts.DebugEnabled,
+		priceTableNamePrefix: opts.PriceTableNamePrefix,
+		instrumentTableName:  opts.InstrumentTableName,
+		useMultipleExchanges: opts.UseMultipleExchanges,
+		automigrateEnabled:   opts.AutomigrateEnabled,
+		db:                   opts.DB,
+		dbDriverName:         opts.DbDriverName,
+		debugEnabled:         opts.DebugEnabled,
 	}
 
 	if store.automigrateEnabled {
-		err := store.AutoMigrate()
+		err := store.AutoMigrateInstruments(context.Background())
 
 		if err != nil {
 			return nil, err

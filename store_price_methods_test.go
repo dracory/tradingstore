@@ -23,7 +23,7 @@ func TestStorePriceCreate(t *testing.T) {
 		SetVolume("1000")
 
 	ctx := context.Background()
-	err = store.PriceCreate(ctx, price)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price)
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
@@ -45,12 +45,12 @@ func TestStorePriceFindByID(t *testing.T) {
 		SetVolume("1000")
 
 	ctx := context.Background()
-	err = store.PriceCreate(ctx, price)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price)
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
 
-	priceFound, errFind := store.PriceFindByID(ctx, price.ID())
+	priceFound, errFind := store.PriceFindByID(ctx, "AAPL", "NASDAQ", "1min", price.ID())
 
 	if errFind != nil {
 		t.Fatal("unexpected error:", errFind)
@@ -64,28 +64,28 @@ func TestStorePriceFindByID(t *testing.T) {
 		t.Fatal("Price id MUST BE ", price.ID(), ", found: ", priceFound.ID())
 	}
 
-	if !priceFound.GetTimeCarbon().Eq(price.GetTimeCarbon()) {
-		t.Fatal("Price time MUST BE ", price.GetTime(), ", found: ", priceFound.GetTime()[0:19])
+	if !priceFound.TimeCarbon().Eq(price.TimeCarbon()) {
+		t.Fatal("Price time MUST BE ", price.Time(), ", found: ", priceFound.Time()[0:19])
 	}
 
-	if priceFound.GetOpen()[0:5] != price.GetOpen() {
-		t.Fatal("Price open MUST BE ", price.GetOpen(), ", found: ", priceFound.GetOpen()[0:5])
+	if priceFound.Open()[0:5] != price.Open() {
+		t.Fatal("Price open MUST BE ", price.Open(), ", found: ", priceFound.Open()[0:5])
 	}
 
-	if priceFound.GetHigh()[0:5] != price.GetHigh() {
-		t.Fatal("Price high MUST BE ", price.GetHigh(), ", found: ", priceFound.GetHigh()[0:5])
+	if priceFound.High()[0:5] != price.High() {
+		t.Fatal("Price high MUST BE ", price.High(), ", found: ", priceFound.High()[0:5])
 	}
 
-	if priceFound.GetLow()[0:5] != price.GetLow() {
-		t.Fatal("Price low MUST BE ", price.GetLow(), ", found: ", priceFound.GetLow()[0:5])
+	if priceFound.Low()[0:5] != price.Low() {
+		t.Fatal("Price low MUST BE ", price.Low(), ", found: ", priceFound.Low()[0:5])
 	}
 
-	if priceFound.GetClose()[0:5] != price.GetClose() {
-		t.Fatal("Price close MUST BE ", price.GetClose(), ", found: ", priceFound.GetClose()[0:5])
+	if priceFound.Close()[0:5] != price.Close() {
+		t.Fatal("Price close MUST BE ", price.Close(), ", found: ", priceFound.Close()[0:5])
 	}
 
-	if priceFound.GetVolume() != price.GetVolume() {
-		t.Fatal("Price volume MUST BE ", price.GetVolume(), ", found: ", priceFound.GetVolume())
+	if priceFound.Volume() != price.Volume() {
+		t.Fatal("Price volume MUST BE ", price.Volume(), ", found: ", priceFound.Volume())
 	}
 }
 
@@ -107,13 +107,13 @@ func TestStorePriceDelete(t *testing.T) {
 	ctx := context.Background()
 
 	// Create the price first
-	err = store.PriceCreate(ctx, price)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price)
 	if err != nil {
 		t.Fatal("unexpected error creating price:", err)
 	}
 
 	// Verify it exists
-	priceFound, errFind := store.PriceFindByID(ctx, price.ID())
+	priceFound, errFind := store.PriceFindByID(ctx, "AAPL", "NASDAQ", "1min", price.ID())
 	if errFind != nil {
 		t.Fatal("unexpected error finding price:", errFind)
 	}
@@ -122,13 +122,13 @@ func TestStorePriceDelete(t *testing.T) {
 	}
 
 	// Delete the price
-	err = store.PriceDelete(ctx, price)
+	err = store.PriceDelete(ctx, "AAPL", "NASDAQ", "1min", price)
 	if err != nil {
 		t.Fatal("unexpected error deleting price:", err)
 	}
 
 	// Verify it was deleted
-	priceDeleted, errFindDeleted := store.PriceFindByID(ctx, price.ID())
+	priceDeleted, errFindDeleted := store.PriceFindByID(ctx, "AAPL", "NASDAQ", "1min", price.ID())
 	if errFindDeleted != nil {
 		t.Fatal("unexpected error finding deleted price:", errFindDeleted)
 	}
@@ -155,13 +155,13 @@ func TestStorePriceDeleteByID(t *testing.T) {
 	ctx := context.Background()
 
 	// Create the price first
-	err = store.PriceCreate(ctx, price)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price)
 	if err != nil {
 		t.Fatal("unexpected error creating price:", err)
 	}
 
 	// Verify it exists
-	exists, errExists := store.PriceExists(ctx, NewPriceQuery().SetID(price.ID()))
+	exists, errExists := store.PriceExists(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().SetID(price.ID()))
 	if errExists != nil {
 		t.Fatal("unexpected error checking if price exists:", errExists)
 	}
@@ -170,13 +170,13 @@ func TestStorePriceDeleteByID(t *testing.T) {
 	}
 
 	// Delete the price by ID
-	err = store.PriceDeleteByID(ctx, price.ID())
+	err = store.PriceDeleteByID(ctx, "AAPL", "NASDAQ", "1min", price.ID())
 	if err != nil {
 		t.Fatal("unexpected error deleting price by ID:", err)
 	}
 
 	// Verify it was deleted
-	existsAfterDelete, errExistsAfterDelete := store.PriceExists(ctx, NewPriceQuery().SetID(price.ID()))
+	existsAfterDelete, errExistsAfterDelete := store.PriceExists(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().SetID(price.ID()))
 	if errExistsAfterDelete != nil {
 		t.Fatal("unexpected error checking if price exists after delete:", errExistsAfterDelete)
 	}
@@ -211,18 +211,18 @@ func TestStorePriceExists(t *testing.T) {
 		SetClose("18.00").
 		SetVolume("2000")
 
-	err = store.PriceCreate(ctx, price1)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price1)
 	if err != nil {
 		t.Fatal("unexpected error creating price1:", err)
 	}
 
-	err = store.PriceCreate(ctx, price2)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price2)
 	if err != nil {
 		t.Fatal("unexpected error creating price2:", err)
 	}
 
 	// Test exists by ID
-	exists, errExists := store.PriceExists(ctx, NewPriceQuery().SetID(price1.ID()))
+	exists, errExists := store.PriceExists(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().SetID(price1.ID()))
 	if errExists != nil {
 		t.Fatal("unexpected error checking if price exists by ID:", errExists)
 	}
@@ -231,7 +231,7 @@ func TestStorePriceExists(t *testing.T) {
 	}
 
 	// Test exists by time
-	exists, errExists = store.PriceExists(ctx, NewPriceQuery().SetTime("2020-01-02 00:00:00"))
+	exists, errExists = store.PriceExists(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().SetTime("2020-01-02 00:00:00"))
 	if errExists != nil {
 		t.Fatal("unexpected error checking if price exists by time:", errExists)
 	}
@@ -240,7 +240,7 @@ func TestStorePriceExists(t *testing.T) {
 	}
 
 	// Test exists by time range
-	exists, errExists = store.PriceExists(ctx, NewPriceQuery().
+	exists, errExists = store.PriceExists(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().
 		SetTimeGte("2020-01-01 00:00:00").
 		SetTimeLte("2020-01-02 23:59:59"))
 	if errExists != nil {
@@ -251,7 +251,7 @@ func TestStorePriceExists(t *testing.T) {
 	}
 
 	// Test not exists with non-existent ID
-	exists, errExists = store.PriceExists(ctx, NewPriceQuery().SetID("non-existent-id"))
+	exists, errExists = store.PriceExists(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().SetID("non-existent-id"))
 	if errExists != nil {
 		t.Fatal("unexpected error checking if non-existent price exists:", errExists)
 	}
@@ -294,23 +294,23 @@ func TestStorePriceCount(t *testing.T) {
 		SetClose("17.00").
 		SetVolume("3000")
 
-	err = store.PriceCreate(ctx, price1)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price1)
 	if err != nil {
 		t.Fatal("unexpected error creating price1:", err)
 	}
 
-	err = store.PriceCreate(ctx, price2)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price2)
 	if err != nil {
 		t.Fatal("unexpected error creating price2:", err)
 	}
 
-	err = store.PriceCreate(ctx, price3)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price3)
 	if err != nil {
 		t.Fatal("unexpected error creating price3:", err)
 	}
 
 	// Test count all
-	count, errCount := store.PriceCount(ctx, NewPriceQuery())
+	count, errCount := store.PriceCount(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery())
 	if errCount != nil {
 		t.Fatal("unexpected error counting all prices:", errCount)
 	}
@@ -319,7 +319,7 @@ func TestStorePriceCount(t *testing.T) {
 	}
 
 	// Test count by time range (partial)
-	count, errCount = store.PriceCount(ctx, NewPriceQuery().
+	count, errCount = store.PriceCount(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().
 		SetTimeGte("2020-01-01 00:00:00").
 		SetTimeLte("2020-01-02 00:00:00"))
 	if errCount != nil {
@@ -330,7 +330,7 @@ func TestStorePriceCount(t *testing.T) {
 	}
 
 	// Test count with ID filter (single result)
-	count, errCount = store.PriceCount(ctx, NewPriceQuery().SetID(price1.ID()))
+	count, errCount = store.PriceCount(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().SetID(price1.ID()))
 	if errCount != nil {
 		t.Fatal("unexpected error counting prices by ID:", errCount)
 	}
@@ -339,7 +339,7 @@ func TestStorePriceCount(t *testing.T) {
 	}
 
 	// Test count with multiple IDs
-	count, errCount = store.PriceCount(ctx, NewPriceQuery().SetIDIn([]string{price1.ID(), price3.ID()}))
+	count, errCount = store.PriceCount(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().SetIDIn([]string{price1.ID(), price3.ID()}))
 	if errCount != nil {
 		t.Fatal("unexpected error counting prices by multiple IDs:", errCount)
 	}
@@ -382,23 +382,23 @@ func TestStorePriceList(t *testing.T) {
 		SetClose("17.00").
 		SetVolume("3000")
 
-	err = store.PriceCreate(ctx, price1)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price1)
 	if err != nil {
 		t.Fatal("unexpected error creating price1:", err)
 	}
 
-	err = store.PriceCreate(ctx, price2)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price2)
 	if err != nil {
 		t.Fatal("unexpected error creating price2:", err)
 	}
 
-	err = store.PriceCreate(ctx, price3)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price3)
 	if err != nil {
 		t.Fatal("unexpected error creating price3:", err)
 	}
 
 	// Test list all
-	prices, errList := store.PriceList(ctx, NewPriceQuery())
+	prices, errList := store.PriceList(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery())
 	if errList != nil {
 		t.Fatal("unexpected error listing all prices:", errList)
 	}
@@ -407,7 +407,7 @@ func TestStorePriceList(t *testing.T) {
 	}
 
 	// Test list with limit
-	prices, errList = store.PriceList(ctx, NewPriceQuery().SetLimit(2))
+	prices, errList = store.PriceList(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().SetLimit(2))
 	if errList != nil {
 		t.Fatal("unexpected error listing prices with limit:", errList)
 	}
@@ -416,7 +416,7 @@ func TestStorePriceList(t *testing.T) {
 	}
 
 	// Test list with time range
-	prices, errList = store.PriceList(ctx, NewPriceQuery().
+	prices, errList = store.PriceList(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().
 		SetTimeGte("2020-01-02 00:00:00").
 		SetTimeLte("2020-01-03 00:00:00"))
 	if errList != nil {
@@ -427,7 +427,7 @@ func TestStorePriceList(t *testing.T) {
 	}
 
 	// Test list with ordering (ascending)
-	prices, errList = store.PriceList(ctx, NewPriceQuery().
+	prices, errList = store.PriceList(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().
 		SetOrderBy(COLUMN_TIME).
 		SetSortDirection("ASC"))
 	if errList != nil {
@@ -436,23 +436,23 @@ func TestStorePriceList(t *testing.T) {
 	if len(prices) != 3 {
 		t.Fatal("Should list 3 prices with ordering, got:", len(prices))
 	}
-	if prices[0].GetTime() != price1.GetTime() {
-		t.Fatal("First price should be oldest, got:", prices[0].GetTime())
+	if prices[0].Time() != price1.Time() {
+		t.Fatal("First price should be oldest, got:", prices[0].Time())
 	}
 
 	// Test list with ordering (descending)
-	prices, errList = store.PriceList(ctx, NewPriceQuery().
+	prices, errList = store.PriceList(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().
 		SetOrderBy(COLUMN_TIME).
 		SetSortDirection("DESC"))
 	if errList != nil {
 		t.Fatal("unexpected error listing prices with descending ordering:", errList)
 	}
-	if prices[0].GetTime() != price3.GetTime() {
-		t.Fatal("First price should be newest, got:", prices[0].GetTime())
+	if prices[0].Time() != price3.Time() {
+		t.Fatal("First price should be newest, got:", prices[0].Time())
 	}
 
 	// Test list with offset
-	prices, errList = store.PriceList(ctx, NewPriceQuery().
+	prices, errList = store.PriceList(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().
 		SetOrderBy(COLUMN_TIME).
 		SetSortDirection("ASC").
 		SetOffset(1).
@@ -463,8 +463,8 @@ func TestStorePriceList(t *testing.T) {
 	if len(prices) != 2 {
 		t.Fatal("Should list 2 prices with offset, got:", len(prices))
 	}
-	if prices[0].GetTime() != price2.GetTime() {
-		t.Fatal("First price with offset should be second oldest, got:", prices[0].GetTime())
+	if prices[0].Time() != price2.Time() {
+		t.Fatal("First price with offset should be second oldest, got:", prices[0].Time())
 	}
 }
 
@@ -486,7 +486,7 @@ func TestStorePriceUpdate(t *testing.T) {
 		SetClose("19.00").
 		SetVolume("1000")
 
-	err = store.PriceCreate(ctx, price)
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price)
 	if err != nil {
 		t.Fatal("unexpected error creating price:", err)
 	}
@@ -499,13 +499,13 @@ func TestStorePriceUpdate(t *testing.T) {
 	price.SetVolume("1500")
 
 	// Save the updates
-	err = store.PriceUpdate(ctx, price)
+	err = store.PriceUpdate(ctx, "AAPL", "NASDAQ", "1min", price)
 	if err != nil {
 		t.Fatal("unexpected error updating price:", err)
 	}
 
 	// Retrieve the updated price
-	updatedPrice, errFind := store.PriceFindByID(ctx, price.ID())
+	updatedPrice, errFind := store.PriceFindByID(ctx, "AAPL", "NASDAQ", "1min", price.ID())
 	if errFind != nil {
 		t.Fatal("unexpected error finding updated price:", errFind)
 	}
@@ -515,24 +515,24 @@ func TestStorePriceUpdate(t *testing.T) {
 	}
 
 	// Check if the values were updated correctly
-	if updatedPrice.GetOpen()[0:5] != "21.00" {
-		t.Fatal("Price open should be updated to 21.00, got:", updatedPrice.GetOpen()[0:5])
+	if updatedPrice.Open()[0:5] != "21.00" {
+		t.Fatal("Price open should be updated to 21.00, got:", updatedPrice.Open()[0:5])
 	}
 
-	if updatedPrice.GetHigh()[0:5] != "23.00" {
-		t.Fatal("Price high should be updated to 23.00, got:", updatedPrice.GetHigh()[0:5])
+	if updatedPrice.High()[0:5] != "23.00" {
+		t.Fatal("Price high should be updated to 23.00, got:", updatedPrice.High()[0:5])
 	}
 
-	if updatedPrice.GetLow()[0:5] != "19.00" {
-		t.Fatal("Price low should be updated to 19.00, got:", updatedPrice.GetLow()[0:5])
+	if updatedPrice.Low()[0:5] != "19.00" {
+		t.Fatal("Price low should be updated to 19.00, got:", updatedPrice.Low()[0:5])
 	}
 
-	if updatedPrice.GetClose()[0:5] != "20.00" {
-		t.Fatal("Price close should be updated to 20.00, got:", updatedPrice.GetClose()[0:5])
+	if updatedPrice.Close()[0:5] != "20.00" {
+		t.Fatal("Price close should be updated to 20.00, got:", updatedPrice.Close()[0:5])
 	}
 
-	if updatedPrice.GetVolume() != "1500" {
-		t.Fatal("Price volume should be updated to 1500, got:", updatedPrice.GetVolume())
+	if updatedPrice.Volume() != "1500" {
+		t.Fatal("Price volume should be updated to 1500, got:", updatedPrice.Volume())
 	}
 
 	// Check that the ID and time remain unchanged
@@ -540,7 +540,7 @@ func TestStorePriceUpdate(t *testing.T) {
 		t.Fatal("Price ID should remain unchanged")
 	}
 
-	if !updatedPrice.GetTimeCarbon().Eq(price.GetTimeCarbon()) {
+	if !updatedPrice.TimeCarbon().Eq(price.TimeCarbon()) {
 		t.Fatal("Price time should remain unchanged")
 	}
 }

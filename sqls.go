@@ -3,7 +3,7 @@ package tradingstore
 import "github.com/gouniverse/sb"
 
 func (store *Store) PriceTableName(symbol string, exchange string, timeframe string) string {
-	priceTableName := store.priceTableName
+	priceTableName := store.priceTableNamePrefix
 
 	if exchange != "" {
 		return priceTableName + symbol + "_" + exchange + "_" + timeframe
@@ -128,11 +128,11 @@ func (store *Store) sqlIndexesCreate() string {
 	sql := ""
 
 	// Create price indexes (using separate SQL statements)
-	sql += "\n\nCREATE INDEX IF NOT EXISTS idx_" + store.priceTableName + "_symbol ON " + store.priceTableName + " (" + COLUMN_SYMBOL + ");"
-	sql += "\nCREATE INDEX IF NOT EXISTS idx_" + store.priceTableName + "_exchange ON " + store.priceTableName + " (" + COLUMN_EXCHANGE + ");"
-	sql += "\nCREATE INDEX IF NOT EXISTS idx_" + store.priceTableName + "_asset_class ON " + store.priceTableName + " (" + COLUMN_ASSET_CLASS + ");"
-	sql += "\nCREATE INDEX IF NOT EXISTS idx_" + store.priceTableName + "_time ON " + store.priceTableName + " (" + COLUMN_TIME + ");"
-	sql += "\nCREATE INDEX IF NOT EXISTS idx_" + store.priceTableName + "_soft_deleted_at ON " + store.priceTableName + " (" + COLUMN_SOFT_DELETED_AT + ");"
+	// sql += "\n\nCREATE INDEX IF NOT EXISTS idx_" + store.priceTableName + "_symbol ON " + store.priceTableName + " (" + COLUMN_SYMBOL + ");"
+	// sql += "\nCREATE INDEX IF NOT EXISTS idx_" + store.priceTableName + "_exchange ON " + store.priceTableName + " (" + COLUMN_EXCHANGE + ");"
+	// sql += "\nCREATE INDEX IF NOT EXISTS idx_" + store.priceTableName + "_asset_class ON " + store.priceTableName + " (" + COLUMN_ASSET_CLASS + ");"
+	// sql += "\nCREATE INDEX IF NOT EXISTS idx_" + store.priceTableName + "_time ON " + store.priceTableName + " (" + COLUMN_TIME + ");"
+	// sql += "\nCREATE INDEX IF NOT EXISTS idx_" + store.priceTableName + "_soft_deleted_at ON " + store.priceTableName + " (" + COLUMN_SOFT_DELETED_AT + ");"
 
 	// Create instrument indexes (using separate SQL statements)
 	sql += "\n\nCREATE INDEX IF NOT EXISTS idx_" + store.instrumentTableName + "_symbol ON " + store.instrumentTableName + " (" + COLUMN_SYMBOL + ");"

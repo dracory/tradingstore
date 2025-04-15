@@ -58,16 +58,16 @@ func TestStoreInstrumentFindByID(t *testing.T) {
 		t.Fatal("Instrument id MUST BE ", instrument.ID(), ", found: ", instrumentFound.ID())
 	}
 
-	if instrumentFound.GetSymbol() != instrument.GetSymbol() {
-		t.Fatal("Instrument symbol MUST BE ", instrument.GetSymbol(), ", found: ", instrumentFound.GetSymbol())
+	if instrumentFound.Symbol() != instrument.Symbol() {
+		t.Fatal("Instrument symbol MUST BE ", instrument.Symbol(), ", found: ", instrumentFound.Symbol())
 	}
 
-	if instrumentFound.GetExchange() != instrument.GetExchange() {
-		t.Fatal("Instrument exchange MUST BE ", instrument.GetExchange(), ", found: ", instrumentFound.GetExchange())
+	if instrumentFound.Exchange() != instrument.Exchange() {
+		t.Fatal("Instrument exchange MUST BE ", instrument.Exchange(), ", found: ", instrumentFound.Exchange())
 	}
 
-	if instrumentFound.GetAssetClass() != instrument.GetAssetClass() {
-		t.Fatal("Instrument asset class MUST BE ", instrument.GetAssetClass(), ", found: ", instrumentFound.GetAssetClass())
+	if instrumentFound.AssetClass() != instrument.AssetClass() {
+		t.Fatal("Instrument asset class MUST BE ", instrument.AssetClass(), ", found: ", instrumentFound.AssetClass())
 	}
 }
 
@@ -416,8 +416,8 @@ func TestStoreInstrumentList(t *testing.T) {
 	if len(instruments) != 1 {
 		t.Fatal("Should list 1 instrument with CURRENCY asset class, got:", len(instruments))
 	}
-	if instruments[0].GetAssetClass() != ASSET_CLASS_CURRENCY {
-		t.Fatal("Asset class should be CURRENCY, got:", instruments[0].GetAssetClass())
+	if instruments[0].AssetClass() != ASSET_CLASS_CURRENCY {
+		t.Fatal("Asset class should be CURRENCY, got:", instruments[0].AssetClass())
 	}
 
 	// Test list with symbol filter
@@ -428,8 +428,8 @@ func TestStoreInstrumentList(t *testing.T) {
 	if len(instruments) != 1 {
 		t.Fatal("Should list 1 instrument with symbol AAPL, got:", len(instruments))
 	}
-	if instruments[0].GetSymbol() != "AAPL" {
-		t.Fatal("Symbol should be AAPL, got:", instruments[0].GetSymbol())
+	if instruments[0].Symbol() != "AAPL" {
+		t.Fatal("Symbol should be AAPL, got:", instruments[0].Symbol())
 	}
 
 	// Test list with symbol like filter
@@ -440,8 +440,8 @@ func TestStoreInstrumentList(t *testing.T) {
 	if len(instruments) != 1 {
 		t.Fatal("Should list 1 instrument with symbol like MS, got:", len(instruments))
 	}
-	if instruments[0].GetSymbol() != "MSFT" {
-		t.Fatal("Symbol should be MSFT, got:", instruments[0].GetSymbol())
+	if instruments[0].Symbol() != "MSFT" {
+		t.Fatal("Symbol should be MSFT, got:", instruments[0].Symbol())
 	}
 
 	// Test list with ordering (ascending by symbol)
@@ -454,8 +454,8 @@ func TestStoreInstrumentList(t *testing.T) {
 	if len(instruments) != 3 {
 		t.Fatal("Should list 3 instruments with ordering, got:", len(instruments))
 	}
-	if instruments[0].GetSymbol() != "AAPL" {
-		t.Fatal("First instrument should be AAPL, got:", instruments[0].GetSymbol())
+	if instruments[0].Symbol() != "AAPL" {
+		t.Fatal("First instrument should be AAPL, got:", instruments[0].Symbol())
 	}
 
 	// Test list with offset and limit
@@ -515,16 +515,16 @@ func TestStoreInstrumentUpdate(t *testing.T) {
 	}
 
 	// Check if the values were updated correctly
-	if updatedInstrument.GetSymbol() != "AAPL.US" {
-		t.Fatal("Instrument symbol should be updated to AAPL.US, got:", updatedInstrument.GetSymbol())
+	if updatedInstrument.Symbol() != "AAPL.US" {
+		t.Fatal("Instrument symbol should be updated to AAPL.US, got:", updatedInstrument.Symbol())
 	}
 
-	if updatedInstrument.GetExchange() != "NYSE" {
-		t.Fatal("Instrument exchange should be updated to NYSE, got:", updatedInstrument.GetExchange())
+	if updatedInstrument.Exchange() != "NYSE" {
+		t.Fatal("Instrument exchange should be updated to NYSE, got:", updatedInstrument.Exchange())
 	}
 
-	if updatedInstrument.GetAssetClass() != ASSET_CLASS_ETF {
-		t.Fatal("Instrument asset class should be updated to ETF, got:", updatedInstrument.GetAssetClass())
+	if updatedInstrument.AssetClass() != ASSET_CLASS_ETF {
+		t.Fatal("Instrument asset class should be updated to ETF, got:", updatedInstrument.AssetClass())
 	}
 
 	// Check that the ID remains unchanged
