@@ -269,6 +269,9 @@ func (store *Store) priceQuery(symbol string, exchange string, timeframe string,
 		} else {
 			q = q.Order(goqu.I(options.OrderBy()).Desc())
 		}
+	} else {
+		// Default sorting by time if no specific ordering is requested
+		q = q.Order(goqu.I(COLUMN_TIME).Asc())
 	}
 
 	columns = []any{}
