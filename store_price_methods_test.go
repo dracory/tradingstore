@@ -3,6 +3,7 @@ package tradingstore
 import (
 	"context"
 	"testing"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -65,23 +66,23 @@ func TestStorePriceFindByID(t *testing.T) {
 	}
 
 	if !priceFound.TimeCarbon().Eq(price.TimeCarbon()) {
-		t.Fatal("Price time MUST BE ", price.Time(), ", found: ", priceFound.Time()[0:19])
+		t.Fatal("Price time MUST BE ", price.Time(), ", found: ", priceFound.Time())
 	}
 
-	if priceFound.Open()[0:5] != price.Open() {
-		t.Fatal("Price open MUST BE ", price.Open(), ", found: ", priceFound.Open()[0:5])
+	if priceFound.OpenFloat() != price.OpenFloat() {
+		t.Fatal("Price open MUST BE ", price.OpenFloat(), ", found: ", priceFound.OpenFloat())
 	}
 
-	if priceFound.High()[0:5] != price.High() {
-		t.Fatal("Price high MUST BE ", price.High(), ", found: ", priceFound.High()[0:5])
+	if priceFound.HighFloat() != price.HighFloat() {
+		t.Fatal("Price high MUST BE ", price.HighFloat(), ", found: ", priceFound.HighFloat())
 	}
 
-	if priceFound.Low()[0:5] != price.Low() {
-		t.Fatal("Price low MUST BE ", price.Low(), ", found: ", priceFound.Low()[0:5])
+	if priceFound.LowFloat() != price.LowFloat() {
+		t.Fatal("Price low MUST BE ", price.LowFloat(), ", found: ", priceFound.LowFloat())
 	}
 
-	if priceFound.Close()[0:5] != price.Close() {
-		t.Fatal("Price close MUST BE ", price.Close(), ", found: ", priceFound.Close()[0:5])
+	if priceFound.CloseFloat() != price.CloseFloat() {
+		t.Fatal("Price close MUST BE ", price.CloseFloat(), ", found: ", priceFound.CloseFloat())
 	}
 
 	if priceFound.Volume() != price.Volume() {
@@ -366,6 +367,13 @@ func TestStorePriceList(t *testing.T) {
 		SetClose("19.00").
 		SetVolume("1000")
 
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price1)
+	if err != nil {
+		t.Fatal("unexpected error creating price1:", err)
+	}
+
+	time.Sleep(1 * time.Second)
+
 	price2 := NewPrice().
 		SetTime("2020-01-02 00:00:00").
 		SetOpen("19.00").
@@ -374,6 +382,13 @@ func TestStorePriceList(t *testing.T) {
 		SetClose("18.00").
 		SetVolume("2000")
 
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price2)
+	if err != nil {
+		t.Fatal("unexpected error creating price2:", err)
+	}
+
+	time.Sleep(1 * time.Second)
+
 	price3 := NewPrice().
 		SetTime("2020-01-03 00:00:00").
 		SetOpen("18.00").
@@ -381,16 +396,6 @@ func TestStorePriceList(t *testing.T) {
 		SetLow("16.00").
 		SetClose("17.00").
 		SetVolume("3000")
-
-	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price1)
-	if err != nil {
-		t.Fatal("unexpected error creating price1:", err)
-	}
-
-	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price2)
-	if err != nil {
-		t.Fatal("unexpected error creating price2:", err)
-	}
 
 	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price3)
 	if err != nil {
@@ -436,7 +441,7 @@ func TestStorePriceList(t *testing.T) {
 	if len(prices) != 3 {
 		t.Fatal("Should list 3 prices with ordering, got:", len(prices))
 	}
-	if prices[0].Time() != price1.Time() {
+	if !prices[0].TimeCarbon().Eq(price1.TimeCarbon()) {
 		t.Fatal("First price should be oldest, got:", prices[0].Time())
 	}
 
@@ -447,7 +452,7 @@ func TestStorePriceList(t *testing.T) {
 	if errList != nil {
 		t.Fatal("unexpected error listing prices with descending ordering:", errList)
 	}
-	if prices[0].Time() != price3.Time() {
+	if !prices[0].TimeCarbon().Eq(price3.TimeCarbon()) {
 		t.Fatal("First price should be newest, got:", prices[0].Time())
 	}
 
@@ -463,7 +468,7 @@ func TestStorePriceList(t *testing.T) {
 	if len(prices) != 2 {
 		t.Fatal("Should list 2 prices with offset, got:", len(prices))
 	}
-	if prices[0].Time() != price2.Time() {
+	if !prices[0].TimeCarbon().Eq(price2.TimeCarbon()) {
 		t.Fatal("First price with offset should be second oldest, got:", prices[0].Time())
 	}
 }
@@ -515,24 +520,24 @@ func TestStorePriceUpdate(t *testing.T) {
 	}
 
 	// Check if the values were updated correctly
-	if updatedPrice.Open()[0:5] != "21.00" {
-		t.Fatal("Price open should be updated to 21.00, got:", updatedPrice.Open()[0:5])
+	if updatedPrice.OpenFloat() != 21.0 {
+		t.Fatal("Price open should be updated to 21.00, got:", updatedPrice.OpenFloat())
 	}
 
-	if updatedPrice.High()[0:5] != "23.00" {
-		t.Fatal("Price high should be updated to 23.00, got:", updatedPrice.High()[0:5])
+	if updatedPrice.HighFloat() != 23.0 {
+		t.Fatal("Price high should be updated to 23.00, got:", updatedPrice.HighFloat())
 	}
 
-	if updatedPrice.Low()[0:5] != "19.00" {
-		t.Fatal("Price low should be updated to 19.00, got:", updatedPrice.Low()[0:5])
+	if updatedPrice.LowFloat() != 19.0 {
+		t.Fatal("Price low should be updated to 19.00, got:", updatedPrice.LowFloat())
 	}
 
-	if updatedPrice.Close()[0:5] != "20.00" {
-		t.Fatal("Price close should be updated to 20.00, got:", updatedPrice.Close()[0:5])
+	if updatedPrice.CloseFloat() != 20.0 {
+		t.Fatal("Price close should be updated to 20.00, got:", updatedPrice.CloseFloat())
 	}
 
-	if updatedPrice.Volume() != "1500" {
-		t.Fatal("Price volume should be updated to 1500, got:", updatedPrice.Volume())
+	if updatedPrice.VolumeFloat() != 1500.0 {
+		t.Fatal("Price volume should be updated to 1500, got:", updatedPrice.VolumeFloat())
 	}
 
 	// Check that the ID and time remain unchanged

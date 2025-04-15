@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"os"
+	"strings"
 
 	_ "modernc.org/sqlite"
 )
@@ -75,7 +76,8 @@ func seedInstruments(store StoreInterface) error {
 		instrument := NewInstrument().
 			SetSymbol(data["symbol"]).
 			SetExchange(data["exchange"]).
-			SetAssetClass(data["asset_class"])
+			SetAssetClass(data["asset_class"]).
+			SetTimeframes(strings.Split(data["timeframes"], ","))
 
 		err := store.InstrumentCreate(context.Background(), instrument)
 		if err != nil {

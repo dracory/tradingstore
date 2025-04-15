@@ -1,15 +1,19 @@
 package tradingstore
 
-import "github.com/gouniverse/sb"
+import (
+	"strings"
+
+	"github.com/gouniverse/sb"
+)
 
 func (store *Store) PriceTableName(symbol string, exchange string, timeframe string) string {
 	priceTableName := store.priceTableNamePrefix
 
 	if exchange != "" {
-		return priceTableName + symbol + "_" + exchange + "_" + timeframe
+		return priceTableName + strings.ToLower(symbol) + "_" + strings.ToLower(exchange) + "_" + strings.ToLower(timeframe)
 	}
 
-	return priceTableName + symbol + "_" + timeframe
+	return priceTableName + strings.ToLower(symbol) + "_" + strings.ToLower(timeframe)
 }
 
 func (store *Store) sqlTablePriceCreate(symbol string, exchange string, timeframe string) string {
@@ -95,7 +99,13 @@ func (store *Store) sqlTableInstrumentCreate() string {
 			Nullable: true,
 		}).
 		Column(sb.Column{
-			Name:     "description",
+			Name:     COLUMN_TIMEFRAMES,
+			Type:     sb.COLUMN_TYPE_STRING,
+			Length:   100,
+			Nullable: true,
+		}).
+		Column(sb.Column{
+			Name:     COLUMN_DESCRIPTION,
 			Type:     sb.COLUMN_TYPE_TEXT,
 			Nullable: true,
 		}).
