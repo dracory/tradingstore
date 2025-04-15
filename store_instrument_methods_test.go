@@ -7,12 +7,31 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+// clearInstruments removes all existing instruments from the database
+func clearInstruments(t *testing.T, store StoreInterface) {
+	ctx := context.Background()
+	instruments, err := store.InstrumentList(ctx, NewInstrumentQuery())
+	if err != nil {
+		t.Fatal("Error listing instruments to clear:", err)
+	}
+
+	for _, instrument := range instruments {
+		err := store.InstrumentDelete(ctx, instrument)
+		if err != nil {
+			t.Fatal("Error deleting instrument:", err)
+		}
+	}
+}
+
 func TestStoreInstrumentCreate(t *testing.T) {
 	store, err := initStore()
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
+
+	// Clear any existing instruments
+	clearInstruments(t, store)
 
 	instrument := NewInstrument().
 		SetSymbol("AAPL").
@@ -32,6 +51,9 @@ func TestStoreInstrumentFindByID(t *testing.T) {
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
+
+	// Clear any existing instruments
+	clearInstruments(t, store)
 
 	instrument := NewInstrument().
 		SetSymbol("MSFT").
@@ -78,6 +100,9 @@ func TestStoreInstrumentDelete(t *testing.T) {
 		t.Fatal("unexpected error:", err)
 	}
 
+	// Clear any existing instruments
+	clearInstruments(t, store)
+
 	instrument := NewInstrument().
 		SetSymbol("GOOG").
 		SetExchange("NASDAQ").
@@ -123,6 +148,9 @@ func TestStoreInstrumentDeleteByID(t *testing.T) {
 		t.Fatal("unexpected error:", err)
 	}
 
+	// Clear any existing instruments
+	clearInstruments(t, store)
+
 	instrument := NewInstrument().
 		SetSymbol("AMZN").
 		SetExchange("NASDAQ").
@@ -167,6 +195,9 @@ func TestStoreInstrumentExists(t *testing.T) {
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
+
+	// Clear any existing instruments
+	clearInstruments(t, store)
 
 	ctx := context.Background()
 
@@ -262,6 +293,9 @@ func TestStoreInstrumentCount(t *testing.T) {
 		t.Fatal("unexpected error:", err)
 	}
 
+	// Clear any existing instruments
+	clearInstruments(t, store)
+
 	ctx := context.Background()
 
 	// Create instruments with different properties
@@ -347,6 +381,9 @@ func TestStoreInstrumentList(t *testing.T) {
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
+
+	// Clear any existing instruments
+	clearInstruments(t, store)
 
 	ctx := context.Background()
 
@@ -479,6 +516,9 @@ func TestStoreInstrumentUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
+
+	// Clear any existing instruments
+	clearInstruments(t, store)
 
 	ctx := context.Background()
 
