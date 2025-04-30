@@ -572,3 +572,109 @@ func TestStoreInstrumentUpdate(t *testing.T) {
 		t.Fatal("Instrument ID should remain unchanged")
 	}
 }
+
+func TestStoreInstrumentSoftDelete(t *testing.T) {
+	store, err := initStore()
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	// Clear any existing instruments
+	clearInstruments(t, store)
+
+	instrument := NewInstrument().
+		SetSymbol("TSLA").
+		SetExchange("NASDAQ").
+		SetAssetClass(ASSET_CLASS_STOCK)
+
+	ctx := context.Background()
+
+	// Create the instrument first
+	err = store.InstrumentCreate(ctx, instrument)
+	if err != nil {
+		t.Fatal("unexpected error creating instrument:", err)
+	}
+
+	// Verify it exists and is not soft deleted
+	instrumentFound, errFind := store.InstrumentFindByID(ctx, instrument.ID())
+	if errFind != nil {
+		t.Fatal("unexpected error finding instrument:", errFind)
+	}
+	if instrumentFound == nil {
+		t.Fatal("Instrument should exist")
+	}
+	if instrumentFound.SoftDeletedAt() != "" {
+		t.Fatal("Instrument should not be soft deleted initially")
+	}
+
+	// Soft delete the instrument
+	err = store.InstrumentSoftDelete(ctx, instrumentFound)
+	if err != nil {
+		t.Fatal("unexpected error soft deleting instrument:", err)
+	}
+
+	// Fetch again and check soft deleted
+	instrumentSoftDeleted, errFindAfter := store.InstrumentFindByID(ctx, instrument.ID())
+	if errFindAfter != nil {
+		t.Fatal("unexpected error finding instrument after soft delete:", errFindAfter)
+	}
+	if instrumentSoftDeleted == nil {
+		t.Fatal("Instrument should still exist after soft delete")
+	}
+	if instrumentSoftDeleted.SoftDeletedAt() == "" {
+		t.Fatal("Instrument should be soft deleted (SoftDeletedAt should be set)")
+	}
+}
+
+func TestStoreInstrumentSoftDeleteByID(t *testing.T) {
+	store, err := initStore()
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	// Clear any existing instruments
+	clearInstruments(t, store)
+
+	instrument := NewInstrument().
+		SetSymbol("NFLX").
+		SetExchange("NASDAQ").
+		SetAssetClass(ASSET_CLASS_STOCK)
+
+	ctx := context.Background()
+
+	// Create the instrument first
+	err = store.InstrumentCreate(ctx, instrument)
+	if err != nil {
+		t.Fatal("unexpected error creating instrument:", err)
+	}
+
+	// Verify it exists and is not soft deleted
+	instrumentFound, errFind := store.InstrumentFindByID(ctx, instrument.ID())
+	if errFind != nil {
+		t.Fatal("unexpected error finding instrument:", errFind)
+	}
+	if instrumentFound == nil {
+		t.Fatal("Instrument should exist")
+	}
+	if instrumentFound.SoftDeletedAt() != "" {
+		t.Fatal("Instrument should not be soft deleted initially")
+	}
+
+	// Soft delete the instrument by ID
+	err = store.InstrumentSoftDeleteByID(ctx, instrument.ID())
+	if err != nil {
+		t.Fatal("unexpected error soft deleting instrument by ID:", err)
+	}
+
+	// Fetch again and check soft deleted
+	instrumentSoftDeleted, errFindAfter := store.InstrumentFindByID(ctx, instrument.ID())
+	if errFindAfter != nil {
+		t.Fatal("unexpected error finding instrument after soft delete by ID:", errFindAfter)
+	}
+	if instrumentSoftDeleted == nil {
+		t.Fatal("Instrument should still exist after soft delete by ID")
+	}
+	if instrumentSoftDeleted.SoftDeletedAt() == "" {
+		t.Fatal("Instrument should be soft deleted (SoftDeletedAt should be set) after soft delete by ID")
+	}
+}

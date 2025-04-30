@@ -1,5 +1,7 @@
 package tradingstore
 
+import "github.com/dromara/carbon/v2"
+
 type InstrumentInterface interface {
 	// from dataobject
 	Data() map[string]string
@@ -26,4 +28,16 @@ type InstrumentInterface interface {
 
 	Timeframes() []string
 	SetTimeframes(timeframes []string) InstrumentInterface
+
+	CreatedAt() string
+	CreatedAtCarbon() *carbon.Carbon
+	SetCreatedAt(createdAt string) InstrumentInterface
+
+	UpdatedAt() string
+	UpdatedAtCarbon() *carbon.Carbon
+	SetUpdatedAt(updatedAt string) InstrumentInterface
+
+	SoftDeletedAt() string
+	SoftDeletedAtCarbon() *carbon.Carbon
+	SetSoftDeletedAt(softDeletedAt string) InstrumentInterface
 }

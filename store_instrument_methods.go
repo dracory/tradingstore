@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/dracory/base/database"
@@ -177,6 +178,39 @@ func (store *Store) InstrumentList(ctx context.Context, options InstrumentQueryI
 	})
 
 	return list, nil
+}
+
+// InstrumentSoftDelete soft deletes an instrument
+func (store *Store) InstrumentSoftDelete(ctx context.Context, instrument InstrumentInterface) error {
+	if instrument == nil {
+		return errors.New("instrument is nil")
+	}
+
+	return store.InstrumentSoftDeleteByID(ctx, instrument.ID())
+}
+
+// InstrumentSoftDeleteByID soft deletes an instrument by ID
+func (store *Store) InstrumentSoftDeleteByID(ctx context.Context, id string) error {
+	if id == "" {
+		return errors.New("instrument id is empty")
+	}
+
+	sqlStr, sqlParams, errSql := goqu.Dialect(store.dbDriverName).
+		Update(store.instrumentTableName).
+		Prepared(true).
+		Set(goqu.Record{COLUMN_SOFT_DELETED_AT: time.Now().Format(time.RFC3339)}).
+		Where(goqu.C(COLUMN_ID).Eq(id)).
+		ToSQL()
+
+	if errSql != nil {
+		return errSql
+	}
+
+	store.logSql("soft delete", sqlStr, sqlParams...)
+
+	_, err := database.Execute(store.toQuerableContext(ctx), sqlStr, sqlParams...)
+
+	return err
 }
 
 // InstrumentUpdate updates an instrument
