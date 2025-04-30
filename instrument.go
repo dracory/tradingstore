@@ -3,6 +3,7 @@ package tradingstore
 import (
 	"strings"
 
+	"github.com/dromara/carbon/v2"
 	"github.com/gouniverse/dataobject"
 	"github.com/gouniverse/uid"
 )
@@ -82,6 +83,10 @@ func (instrument *instrumentImplementation) CreatedAt() string {
 	return instrument.Get(COLUMN_CREATED_AT)
 }
 
+func (instrument *instrumentImplementation) CreatedAtCarbon() *carbon.Carbon {
+	return carbon.Parse(instrument.CreatedAt(), carbon.UTC)
+}
+
 func (instrument *instrumentImplementation) SetCreatedAt(createdAt string) InstrumentInterface {
 	instrument.Set(COLUMN_CREATED_AT, createdAt)
 	return instrument
@@ -89,6 +94,10 @@ func (instrument *instrumentImplementation) SetCreatedAt(createdAt string) Instr
 
 func (instrument *instrumentImplementation) SoftDeletedAt() string {
 	return instrument.Get(COLUMN_SOFT_DELETED_AT)
+}
+
+func (instrument *instrumentImplementation) SoftDeletedAtCarbon() *carbon.Carbon {
+	return carbon.Parse(instrument.SoftDeletedAt(), carbon.UTC)
 }
 
 func (instrument *instrumentImplementation) SetSoftDeletedAt(softDeletedAt string) InstrumentInterface {
@@ -111,6 +120,10 @@ func (instrument *instrumentImplementation) SetTimeframes(timeframes []string) I
 
 func (instrument *instrumentImplementation) UpdatedAt() string {
 	return instrument.Get(COLUMN_UPDATED_AT)
+}
+
+func (instrument *instrumentImplementation) UpdatedAtCarbon() *carbon.Carbon {
+	return carbon.Parse(instrument.UpdatedAt(), carbon.UTC)
 }
 
 func (instrument *instrumentImplementation) SetUpdatedAt(updatedAt string) InstrumentInterface {

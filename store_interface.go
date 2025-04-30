@@ -42,6 +42,12 @@ type StoreInterface interface {
 	// InstrumentList returns a list of instruments from the database based on criteria
 	InstrumentList(ctx context.Context, options InstrumentQueryInterface) ([]InstrumentInterface, error)
 
+	// InstrumentSoftDelete soft deletes an instrument
+	InstrumentSoftDelete(ctx context.Context, instrument InstrumentInterface) error
+
+	// InstrumentSoftDeleteByID soft deletes an instrument by ID
+	InstrumentSoftDeleteByID(ctx context.Context, id string) error
+
 	// InstrumentUpdate updates an instrument
 	InstrumentUpdate(ctx context.Context, instrument InstrumentInterface) error
 
