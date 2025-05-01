@@ -1,6 +1,6 @@
 package tradingstore
 
-// Asset Class (from https://www.investopedia.com/terms/a/asset-class.asp)
+// Asset Class (from https://en.wikipedia.org/wiki/Asset_classes)
 const ASSET_CLASS_BOND = "BOND"
 const ASSET_CLASS_COMMODITY = "COMMODITY"   // Commodities, such as gold, oil, and agricultural products
 const ASSET_CLASS_CRYPTO = "CRYPTO"         // Cryptocurrency
