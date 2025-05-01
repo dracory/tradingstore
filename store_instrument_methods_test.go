@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/dromara/carbon/v2"
 	_ "modernc.org/sqlite"
 )
 
@@ -603,7 +604,7 @@ func TestStoreInstrumentSoftDelete(t *testing.T) {
 	if instrumentFound == nil {
 		t.Fatal("Instrument should exist")
 	}
-	if instrumentFound.SoftDeletedAt() != "" {
+	if instrumentFound.SoftDeletedAt() != carbon.MaxValue().ToDateTimeString() {
 		t.Fatal("Instrument should not be soft deleted initially")
 	}
 
@@ -621,8 +622,8 @@ func TestStoreInstrumentSoftDelete(t *testing.T) {
 	if instrumentSoftDeleted == nil {
 		t.Fatal("Instrument should still exist after soft delete")
 	}
-	if instrumentSoftDeleted.SoftDeletedAt() == "" {
-		t.Fatal("Instrument should be soft deleted (SoftDeletedAt should be set)")
+	if instrumentSoftDeleted.SoftDeletedAtCarbon().ToDateTimeString() != carbon.Now().ToDateTimeString() {
+		t.Fatal("Instrument should be soft deleted (SoftDeletedAt should be set to now)")
 	}
 }
 
@@ -656,8 +657,8 @@ func TestStoreInstrumentSoftDeleteByID(t *testing.T) {
 	if instrumentFound == nil {
 		t.Fatal("Instrument should exist")
 	}
-	if instrumentFound.SoftDeletedAt() != "" {
-		t.Fatal("Instrument should not be soft deleted initially")
+	if instrumentFound.SoftDeletedAt() != carbon.MaxValue().ToDateTimeString() {
+		t.Fatal("Instrument should be not soft deleted (SoftDeletedAt should be set to max value)")
 	}
 
 	// Soft delete the instrument by ID
@@ -674,7 +675,7 @@ func TestStoreInstrumentSoftDeleteByID(t *testing.T) {
 	if instrumentSoftDeleted == nil {
 		t.Fatal("Instrument should still exist after soft delete by ID")
 	}
-	if instrumentSoftDeleted.SoftDeletedAt() == "" {
-		t.Fatal("Instrument should be soft deleted (SoftDeletedAt should be set) after soft delete by ID")
+	if instrumentSoftDeleted.SoftDeletedAtCarbon().ToDateTimeString() != carbon.Now().ToDateTimeString() {
+		t.Fatal("Instrument should be soft deleted (SoftDeletedAt should be set to now) after soft delete by ID", instrumentSoftDeleted.SoftDeletedAt())
 	}
 }
