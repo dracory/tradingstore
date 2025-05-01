@@ -101,6 +101,7 @@ func main() {
 
     // Create a new instrument
     instrument := NewInstrument().
+        SetName("Apple Inc.").
         SetSymbol("AAPL").
         SetExchange("NASDAQ").
         SetAssetClass("STOCK").
@@ -112,7 +113,7 @@ func main() {
     }
 
     // Create pricing tables
-    err := store.AutomigratePrices()
+    err := store.AutomigratePrices(ctx)
 
     if err != nil {
         log.Fatal(err)
@@ -156,25 +157,26 @@ The TradingStore library is organized into three main components:
 classDiagram
     class StoreInterface {
         <<interface>>
-        +AutoMigrate() error
         +AutoMigrateInstruments(ctx) error
         +AutoMigratePrices(ctx) error
         +DB() *sql.DB
-        +EnableDebug(bool)
+        +EnableDebug(debug bool)
         +InstrumentCount(ctx, options) (int64, error)
         +InstrumentCreate(ctx, instrument) error
         +InstrumentDelete(ctx, instrument) error
-        +InstrumentDeleteByID(ctx, id) error
+        +InstrumentDeleteByID(ctx, id string) error
         +InstrumentExists(ctx, options) (bool, error)
-        +InstrumentFindByID(ctx, id) (InstrumentInterface, error)
+        +InstrumentFindByID(ctx, id string) (InstrumentInterface, error)
         +InstrumentList(ctx, options) ([]InstrumentInterface, error)
+        +InstrumentSoftDelete(ctx, instrument) error
+        +InstrumentSoftDeleteByID(ctx, id string) error
         +InstrumentUpdate(ctx, instrument) error
         +PriceCount(ctx, symbol, exchange, timeframe, options) (int64, error)
         +PriceCreate(ctx, symbol, exchange, timeframe, price) error
         +PriceDelete(ctx, symbol, exchange, timeframe, price) error
-        +PriceDeleteByID(ctx, symbol, exchange, timeframe, id) error
+        +PriceDeleteByID(ctx, symbol, exchange, timeframe, id string) error
         +PriceExists(ctx, symbol, exchange, timeframe, options) (bool, error)
-        +PriceFindByID(ctx, symbol, exchange, timeframe, id) (PriceInterface, error)
+        +PriceFindByID(ctx, symbol, exchange, timeframe, id string) (PriceInterface, error)
         +PriceList(ctx, symbol, exchange, timeframe, options) ([]PriceInterface, error)
         +PriceUpdate(ctx, symbol, exchange, timeframe, price) error
     }
@@ -182,17 +184,16 @@ classDiagram
     class Store {
         -priceTableNamePrefix string
         -instrumentTableName string
+        -useMultipleExchanges bool
         -db *sql.DB
         -dbDriverName string
         -automigrateEnabled bool
         -debugEnabled bool
-        -useMultipleExchanges bool
         -sqlLogger *slog.Logger
-        +AutoMigrate() error
         +AutoMigrateInstruments(ctx) error
         +AutoMigratePrices(ctx) error
         +DB() *sql.DB
-        +EnableDebug(bool)
+        +EnableDebug(debug bool)
         +PriceTableName(symbol, exchange, timeframe) string
     }
 
@@ -209,25 +210,25 @@ classDiagram
         +DataChanged() map[string]string
         +MarkAsNotDirty()
         +ID() string
-        +SetID(id) PriceInterface
-        +Open() string
-        +OpenFloat() float64
-        +SetOpen(open) PriceInterface
-        +High() string
-        +HighFloat() float64
-        +SetHigh(high) PriceInterface
-        +Low() string
-        +LowFloat() float64
-        +SetLow(low) PriceInterface
+        +SetID(id string) PriceInterface
         +Close() string
         +CloseFloat() float64
-        +SetClose(close) PriceInterface
-        +Volume() string
-        +VolumeFloat() float64
-        +SetVolume(volume) PriceInterface
+        +SetClose(close string) PriceInterface
+        +High() string
+        +HighFloat() float64
+        +SetHigh(high string) PriceInterface
+        +Low() string
+        +LowFloat() float64
+        +SetLow(low string) PriceInterface
+        +Open() string
+        +OpenFloat() float64
+        +SetOpen(open string) PriceInterface
         +Time() string
         +TimeCarbon() *carbon.Carbon
-        +SetTime(time) PriceInterface
+        +SetTime(time string) PriceInterface
+        +Volume() string
+        +VolumeFloat() float64
+        +SetVolume(volume string) PriceInterface
     }
 
     class Price {
@@ -236,13 +237,39 @@ classDiagram
 
     class PriceQueryInterface {
         <<interface>>
-        +SetAssetClass(assetClass) PriceQueryInterface
-        +SetExchange(exchange) PriceQueryInterface
-        +Count() int
-        +Get() []PriceInterface
-        +SetSymbol(symbol) PriceQueryInterface
-        +SetTimeGte(timeFrom) PriceQueryInterface
-        +SetTimeLte(timeTo) PriceQueryInterface
+        +Validate() error
+        +Columns() []string
+        +SetColumns(columns []string) PriceQueryInterface
+        +HasCountOnly() bool
+        +IsCountOnly() bool
+        +SetCountOnly(countOnly bool) PriceQueryInterface
+        +HasTime() bool
+        +Time() string
+        +SetTime(createdAt string) PriceQueryInterface
+        +HasTimeGte() bool
+        +TimeGte() string
+        +SetTimeGte(createdAtGte string) PriceQueryInterface
+        +HasTimeLte() bool
+        +TimeLte() string
+        +SetTimeLte(createdAtLte string) PriceQueryInterface
+        +HasID() bool
+        +ID() string
+        +SetID(id string) PriceQueryInterface
+        +HasIDIn() bool
+        +IDIn() []string
+        +SetIDIn(idIn []string) PriceQueryInterface
+        +HasLimit() bool
+        +Limit() int
+        +SetLimit(limit int) PriceQueryInterface
+        +HasOffset() bool
+        +Offset() int
+        +SetOffset(offset int) PriceQueryInterface
+        +HasOrderBy() bool
+        +OrderBy() string
+        +SetOrderBy(orderBy string) PriceQueryInterface
+        +HasSortDirection() bool
+        +SortDirection() string
+        +SetSortDirection(sortDirection string) PriceQueryInterface
     }
 
     PriceInterface <|.. Price
@@ -257,18 +284,38 @@ classDiagram
         +Data() map[string]string
         +DataChanged() map[string]string
         +MarkAsNotDirty()
-        +ID() string
-        +SetID(id) InstrumentInterface
-        +Symbol() string
-        +SetSymbol(symbol) InstrumentInterface
-        +Exchange() string
-        +SetExchange(exchange) InstrumentInterface
         +AssetClass() string
-        +SetAssetClass(assetClass) InstrumentInterface
+        +SetAssetClass(assetClass string) InstrumentInterface
+        +Exchange() string
+        +SetExchange(exchange string) InstrumentInterface
         +Description() string
-        +SetDescription(description) InstrumentInterface
+        +SetDescription(description string) InstrumentInterface
+        +ID() string
+        +SetID(id string) InstrumentInterface
+        +Name() string
+        +SetName(name string) InstrumentInterface
+        +Status() string
+        +SetStatus(status string) InstrumentInterface
+        +Symbol() string
+        +SetSymbol(symbol string) InstrumentInterface
         +Timeframes() []string
-        +SetTimeframes(timeframes) InstrumentInterface
+        +SetTimeframes(timeframes []string) InstrumentInterface
+        +Meta(key string) (string, error)
+        +SetMeta(key string, value string) error
+        +DeleteMeta(key string) error
+        +Metas() (map[string]string, error)
+        +SetMetas(metas map[string]string) error
+        +Memo() string
+        +SetMemo(memo string) InstrumentInterface
+        +CreatedAt() string
+        +CreatedAtCarbon() *carbon.Carbon
+        +SetCreatedAt(createdAt string) InstrumentInterface
+        +UpdatedAt() string
+        +UpdatedAtCarbon() *carbon.Carbon
+        +SetUpdatedAt(updatedAt string) InstrumentInterface
+        +SoftDeletedAt() string
+        +SoftDeletedAtCarbon() *carbon.Carbon
+        +SetSoftDeletedAt(softDeletedAt string) InstrumentInterface
     }
 
     class Instrument {
@@ -277,12 +324,41 @@ classDiagram
 
     class InstrumentQueryInterface {
         <<interface>>
-        +SetAssetClass(assetClass) InstrumentQueryInterface
-        +SetExchange(exchange) InstrumentQueryInterface
-        +Count() int
-        +Get() []InstrumentInterface
-        +SetSymbol(symbol) InstrumentQueryInterface
-        +SetSymbolLike(symbolLike) InstrumentQueryInterface
+        +SetID(id string) InstrumentQueryInterface
+        +HasID() bool
+        +ID() string
+        +SetIDIn(idIn []string) InstrumentQueryInterface
+        +HasIDIn() bool
+        +IDIn() []string
+        +SetSymbol(symbol string) InstrumentQueryInterface
+        +HasSymbol() bool
+        +Symbol() string
+        +SetSymbolLike(symbolLike string) InstrumentQueryInterface
+        +HasSymbolLike() bool
+        +SymbolLike() string
+        +SetAssetClass(assetClass string) InstrumentQueryInterface
+        +HasAssetClass() bool
+        +AssetClass() string
+        +SetExchange(exchange string) InstrumentQueryInterface
+        +HasExchange() bool
+        +Exchange() string
+        +SetLimit(limit int) InstrumentQueryInterface
+        +HasLimit() bool
+        +Limit() int
+        +SetOffset(offset int) InstrumentQueryInterface
+        +HasOffset() bool
+        +Offset() int
+        +SetOrderBy(orderBy string) InstrumentQueryInterface
+        +HasOrderBy() bool
+        +OrderBy() string
+        +SetSortDirection(sortDirection string) InstrumentQueryInterface
+        +HasSortDirection() bool
+        +SortDirection() string
+        +SetCountOnly(countOnly bool) InstrumentQueryInterface
+        +HasCountOnly() bool
+        +IsCountOnly() bool
+        +Columns() []string
+        +SetColumns(columns []string) InstrumentQueryInterface
     }
 
     InstrumentInterface <|.. Instrument
