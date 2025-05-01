@@ -110,6 +110,16 @@ func (store *Store) sqlTableInstrumentCreate() string {
 			Nullable: true,
 		}).
 		Column(sb.Column{
+			Name:     COLUMN_MEMO,
+			Type:     sb.COLUMN_TYPE_TEXT,
+			Nullable: true,
+		}).
+		Column(sb.Column{
+			Name:     COLUMN_META,
+			Type:     sb.COLUMN_TYPE_LONGTEXT,
+			Nullable: true,
+		}).
+		Column(sb.Column{
 			Name:     COLUMN_CREATED_AT,
 			Type:     sb.COLUMN_TYPE_STRING,
 			Length:   50,

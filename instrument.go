@@ -1,6 +1,7 @@
 package tradingstore
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/dromara/carbon/v2"
@@ -20,6 +21,14 @@ type instrumentImplementation struct {
 func NewInstrument() InstrumentInterface {
 	o := (&instrumentImplementation{}).
 		SetID(uid.HumanUid())
+
+	o.SetDescription("")
+	o.SetMemo("")
+	o.SetMetas(map[string]string{})
+	o.SetTimeframes([]string{})
+	o.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
+	o.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
+	o.SetSoftDeletedAt(carbon.MaxValue().ToDateTimeString())
 
 	return o
 }
@@ -90,6 +99,74 @@ func (instrument *instrumentImplementation) CreatedAtCarbon() *carbon.Carbon {
 func (instrument *instrumentImplementation) SetCreatedAt(createdAt string) InstrumentInterface {
 	instrument.Set(COLUMN_CREATED_AT, createdAt)
 	return instrument
+}
+
+func (instrument *instrumentImplementation) Memo() string {
+	return instrument.Get(COLUMN_MEMO)
+}
+
+func (instrument *instrumentImplementation) SetMemo(memo string) InstrumentInterface {
+	instrument.Set(COLUMN_MEMO, memo)
+	return instrument
+}
+
+func (instrument *instrumentImplementation) Meta(key string) (string, error) {
+	metas, err := instrument.Metas()
+	if err != nil {
+		return "", err
+	}
+
+	value, ok := metas[key]
+	if !ok {
+		return "", nil
+	}
+
+	return value, nil
+}
+
+func (instrument *instrumentImplementation) SetMeta(key string, value string) error {
+	metas, err := instrument.Metas()
+	if err != nil {
+		return err
+	}
+
+	metas[key] = value
+	return instrument.SetMetas(metas)
+}
+
+func (instrument *instrumentImplementation) DeleteMeta(key string) error {
+	metas, err := instrument.Metas()
+	if err != nil {
+		return err
+	}
+
+	delete(metas, key)
+	return instrument.SetMetas(metas)
+}
+
+func (instrument *instrumentImplementation) Metas() (map[string]string, error) {
+	metasStr := instrument.Get(COLUMN_METAS)
+	if metasStr == "" {
+		return map[string]string{}, nil
+	}
+
+	var metas map[string]string
+	err := json.Unmarshal([]byte(metasStr), &metas)
+	if err != nil {
+		return map[string]string{}, err
+	}
+
+	return metas, nil
+}
+
+func (instrument *instrumentImplementation) SetMetas(metas map[string]string) error {
+	metasBytes, err := json.Marshal(metas)
+	if err != nil {
+		return err
+	}
+
+	instrument.Set(COLUMN_METAS, string(metasBytes))
+	return nil
 }
 
 func (instrument *instrumentImplementation) SoftDeletedAt() string {
