@@ -24,6 +24,12 @@ type InstrumentInterface interface {
 	ID() string
 	SetID(id string) InstrumentInterface
 
+	Name() string
+	SetName(name string) InstrumentInterface
+
+	Status() string
+	SetStatus(status string) InstrumentInterface
+
 	Symbol() string
 	SetSymbol(symbol string) InstrumentInterface
 

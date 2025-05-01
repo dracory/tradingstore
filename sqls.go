@@ -81,6 +81,18 @@ func (store *Store) sqlTableInstrumentCreate() string {
 			PrimaryKey: true,
 		}).
 		Column(sb.Column{
+			Name:     COLUMN_NAME,
+			Type:     sb.COLUMN_TYPE_STRING,
+			Length:   100,
+			Nullable: true,
+		}).
+		Column(sb.Column{
+			Name:     COLUMN_STATUS,
+			Type:     sb.COLUMN_TYPE_STRING,
+			Length:   20,
+			Nullable: true,
+		}).
+		Column(sb.Column{
 			Name:     COLUMN_ASSET_CLASS,
 			Type:     sb.COLUMN_TYPE_STRING,
 			Length:   40,
