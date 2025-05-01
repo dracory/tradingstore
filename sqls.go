@@ -115,7 +115,7 @@ func (store *Store) sqlTableInstrumentCreate() string {
 			Nullable: true,
 		}).
 		Column(sb.Column{
-			Name:     COLUMN_META,
+			Name:     COLUMN_METAS,
 			Type:     sb.COLUMN_TYPE_LONGTEXT,
 			Nullable: true,
 		}).
