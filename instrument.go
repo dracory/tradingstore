@@ -22,6 +22,7 @@ func NewInstrument() InstrumentInterface {
 	o := (&instrumentImplementation{}).
 		SetID(uid.HumanUid())
 
+	// Default values
 	o.SetDescription("")
 	o.SetMemo("")
 	o.SetMetas(map[string]string{})

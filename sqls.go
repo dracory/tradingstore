@@ -28,35 +28,35 @@ func (store *Store) sqlTablePriceCreate(symbol string, exchange string, timefram
 		Column(sb.Column{
 			Name:     COLUMN_OPEN,
 			Type:     sb.COLUMN_TYPE_DECIMAL,
-			Length:   10,
+			Length:   20,
 			Decimals: 8,
 			Nullable: false,
 		}).
 		Column(sb.Column{
 			Name:     COLUMN_HIGH,
 			Type:     sb.COLUMN_TYPE_DECIMAL,
-			Length:   10,
+			Length:   20,
 			Decimals: 8,
 			Nullable: false,
 		}).
 		Column(sb.Column{
 			Name:     COLUMN_LOW,
 			Type:     sb.COLUMN_TYPE_DECIMAL,
-			Length:   10,
+			Length:   20,
 			Decimals: 8,
 			Nullable: false,
 		}).
 		Column(sb.Column{
 			Name:     COLUMN_CLOSE,
 			Type:     sb.COLUMN_TYPE_DECIMAL,
-			Length:   10,
+			Length:   20,
 			Decimals: 8,
 			Nullable: false,
 		}).
 		Column(sb.Column{
 			Name:     COLUMN_VOLUME,
 			Type:     sb.COLUMN_TYPE_INTEGER,
-			Length:   10,
+			Length:   20,
 			Nullable: false,
 		}).
 		Column(sb.Column{
