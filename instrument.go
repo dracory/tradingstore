@@ -23,6 +23,10 @@ func NewInstrument() InstrumentInterface {
 		SetID(uid.HumanUid())
 
 	// Default values
+	o.SetName("")
+	o.SetStatus(INSTRUMENT_STATUS_DRAFT)
+	o.SetAssetClass(ASSET_CLASS_UNKNOWN)
+	o.SetExchange("")
 	o.SetDescription("")
 	o.SetMemo("")
 	o.SetMetas(map[string]string{})
@@ -170,6 +174,15 @@ func (instrument *instrumentImplementation) SetMetas(metas map[string]string) er
 	return nil
 }
 
+func (instrument *instrumentImplementation) Name() string {
+	return instrument.Get(COLUMN_NAME)
+}
+
+func (instrument *instrumentImplementation) SetName(name string) InstrumentInterface {
+	instrument.Set(COLUMN_NAME, name)
+	return instrument
+}
+
 func (instrument *instrumentImplementation) SoftDeletedAt() string {
 	return instrument.Get(COLUMN_SOFT_DELETED_AT)
 }
@@ -180,6 +193,15 @@ func (instrument *instrumentImplementation) SoftDeletedAtCarbon() *carbon.Carbon
 
 func (instrument *instrumentImplementation) SetSoftDeletedAt(softDeletedAt string) InstrumentInterface {
 	instrument.Set(COLUMN_SOFT_DELETED_AT, softDeletedAt)
+	return instrument
+}
+
+func (instrument *instrumentImplementation) Status() string {
+	return instrument.Get(COLUMN_STATUS)
+}
+
+func (instrument *instrumentImplementation) SetStatus(status string) InstrumentInterface {
+	instrument.Set(COLUMN_STATUS, status)
 	return instrument
 }
 
