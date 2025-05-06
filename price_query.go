@@ -24,43 +24,47 @@ func (c *priceQueryImplementation) hasProperty(name string) bool {
 }
 
 func (c *priceQueryImplementation) Validate() error {
-	if c.HasID() && c.ID() == "" {
+	if c.IsIDSet() && c.ID() == "" {
 		return errors.New("price query. id cannot be empty")
 	}
 
-	if c.HasIDIn() && len(c.IDIn()) == 0 {
+	if c.IsIDInSet() && len(c.IDIn()) == 0 {
 		return errors.New("price query. id_in cannot be empty")
 	}
 
-	if c.HasOrderBy() && c.OrderBy() == "" {
+	if c.IsOrderBySet() && c.OrderBy() == "" {
 		return errors.New("price query. order_by cannot be empty")
 	}
 
-	if c.HasSortDirection() && c.SortDirection() == "" {
-		return errors.New("price query. sort_direction cannot be empty")
+	if c.IsOrderDirectionSet() && c.OrderDirection() == "" {
+		return errors.New("price query. order_direction cannot be empty")
 	}
 
-	if c.HasLimit() && c.Limit() <= 0 {
+	if c.IsLimitSet() && c.Limit() <= 0 {
 		return errors.New("price query. limit must be greater than 0")
 	}
 
-	if c.HasOffset() && c.Offset() < 0 {
+	if c.IsOffsetSet() && c.Offset() < 0 {
 		return errors.New("price query. offset must be greater than or equal to 0")
 	}
 
-	if c.HasTime() && c.Time() == "" {
+	if c.IsTimeSet() && c.Time() == "" {
 		return errors.New("price query. time cannot be empty")
 	}
 
-	if c.HasTimeGte() && c.TimeGte() == "" {
+	if c.IsTimeGteSet() && c.TimeGte() == "" {
 		return errors.New("price query. time_gte cannot be empty")
 	}
 
-	if c.HasTimeLte() && c.TimeLte() == "" {
+	if c.IsTimeLteSet() && c.TimeLte() == "" {
 		return errors.New("price query. time_lte cannot be empty")
 	}
 
 	return nil
+}
+
+func (c *priceQueryImplementation) IsColumnsSet() bool {
+	return c.hasProperty("columns")
 }
 
 func (c *priceQueryImplementation) Columns() []string {
@@ -77,12 +81,12 @@ func (c *priceQueryImplementation) SetColumns(columns []string) PriceQueryInterf
 	return c
 }
 
-func (c *priceQueryImplementation) HasCountOnly() bool {
+func (c *priceQueryImplementation) IsCountOnlySet() bool {
 	return c.hasProperty("count_only")
 }
 
 func (c *priceQueryImplementation) IsCountOnly() bool {
-	if !c.HasCountOnly() {
+	if !c.IsCountOnlySet() {
 		return false
 	}
 
@@ -95,7 +99,7 @@ func (c *priceQueryImplementation) SetCountOnly(countOnly bool) PriceQueryInterf
 	return c
 }
 
-func (c *priceQueryImplementation) HasID() bool {
+func (c *priceQueryImplementation) IsIDSet() bool {
 	return c.hasProperty("id")
 }
 
@@ -113,7 +117,7 @@ func (c *priceQueryImplementation) SetID(id string) PriceQueryInterface {
 	return c
 }
 
-func (c *priceQueryImplementation) HasIDIn() bool {
+func (c *priceQueryImplementation) IsIDInSet() bool {
 	return c.hasProperty("id_in")
 }
 
@@ -131,12 +135,12 @@ func (c *priceQueryImplementation) SetIDIn(idIn []string) PriceQueryInterface {
 	return c
 }
 
-func (c *priceQueryImplementation) HasLimit() bool {
+func (c *priceQueryImplementation) IsLimitSet() bool {
 	return c.hasProperty("limit")
 }
 
 func (c *priceQueryImplementation) Limit() int {
-	if !c.HasLimit() {
+	if !c.IsLimitSet() {
 		return 0
 	}
 
@@ -149,12 +153,12 @@ func (c *priceQueryImplementation) SetLimit(limit int) PriceQueryInterface {
 	return c
 }
 
-func (c *priceQueryImplementation) HasOffset() bool {
+func (c *priceQueryImplementation) IsOffsetSet() bool {
 	return c.hasProperty("offset")
 }
 
 func (c *priceQueryImplementation) Offset() int {
-	if !c.HasOffset() {
+	if !c.IsOffsetSet() {
 		return 0
 	}
 
@@ -167,12 +171,12 @@ func (c *priceQueryImplementation) SetOffset(offset int) PriceQueryInterface {
 	return c
 }
 
-func (c *priceQueryImplementation) HasOrderBy() bool {
+func (c *priceQueryImplementation) IsOrderBySet() bool {
 	return c.hasProperty("order_by")
 }
 
 func (c *priceQueryImplementation) OrderBy() string {
-	if !c.HasOrderBy() {
+	if !c.IsOrderBySet() {
 		return ""
 	}
 
@@ -185,30 +189,30 @@ func (c *priceQueryImplementation) SetOrderBy(orderBy string) PriceQueryInterfac
 	return c
 }
 
-func (c *priceQueryImplementation) HasSortDirection() bool {
-	return c.hasProperty("sort_direction")
+func (c *priceQueryImplementation) IsOrderDirectionSet() bool {
+	return c.hasProperty("order_direction")
 }
 
-func (c *priceQueryImplementation) SortDirection() string {
-	if !c.HasSortDirection() {
+func (c *priceQueryImplementation) OrderDirection() string {
+	if !c.IsOrderDirectionSet() {
 		return ""
 	}
 
-	return c.properties["sort_direction"].(string)
+	return c.properties["order_direction"].(string)
 }
 
-func (c *priceQueryImplementation) SetSortDirection(sortDirection string) PriceQueryInterface {
-	c.properties["sort_direction"] = sortDirection
+func (c *priceQueryImplementation) SetOrderDirection(orderDirection string) PriceQueryInterface {
+	c.properties["order_direction"] = orderDirection
 
 	return c
 }
 
-func (c *priceQueryImplementation) HasTime() bool {
+func (c *priceQueryImplementation) IsTimeSet() bool {
 	return c.hasProperty("time")
 }
 
 func (c *priceQueryImplementation) Time() string {
-	if !c.HasTime() {
+	if !c.IsTimeSet() {
 		return ""
 	}
 
@@ -221,12 +225,12 @@ func (c *priceQueryImplementation) SetTime(time string) PriceQueryInterface {
 	return c
 }
 
-func (c *priceQueryImplementation) HasTimeGte() bool {
+func (c *priceQueryImplementation) IsTimeGteSet() bool {
 	return c.hasProperty("time_gte")
 }
 
 func (c *priceQueryImplementation) TimeGte() string {
-	if !c.HasTimeGte() {
+	if !c.IsTimeGteSet() {
 		return ""
 	}
 
@@ -239,12 +243,12 @@ func (c *priceQueryImplementation) SetTimeGte(timeGte string) PriceQueryInterfac
 	return c
 }
 
-func (c *priceQueryImplementation) HasTimeLte() bool {
+func (c *priceQueryImplementation) IsTimeLteSet() bool {
 	return c.hasProperty("time_lte")
 }
 
 func (c *priceQueryImplementation) TimeLte() string {
-	if !c.HasTimeLte() {
+	if !c.IsTimeLteSet() {
 		return ""
 	}
 

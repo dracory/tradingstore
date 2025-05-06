@@ -434,7 +434,7 @@ func TestStorePriceList(t *testing.T) {
 	// Test list with ordering (ascending)
 	prices, errList = store.PriceList(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().
 		SetOrderBy(COLUMN_TIME).
-		SetSortDirection("ASC"))
+		SetOrderDirection("ASC"))
 	if errList != nil {
 		t.Fatal("unexpected error listing prices with ordering:", errList)
 	}
@@ -448,7 +448,7 @@ func TestStorePriceList(t *testing.T) {
 	// Test list with ordering (descending)
 	prices, errList = store.PriceList(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().
 		SetOrderBy(COLUMN_TIME).
-		SetSortDirection("DESC"))
+		SetOrderDirection("DESC"))
 	if errList != nil {
 		t.Fatal("unexpected error listing prices with descending ordering:", errList)
 	}
@@ -459,7 +459,7 @@ func TestStorePriceList(t *testing.T) {
 	// Test list with offset
 	prices, errList = store.PriceList(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().
 		SetOrderBy(COLUMN_TIME).
-		SetSortDirection("ASC").
+		SetOrderDirection("ASC").
 		SetOffset(1).
 		SetLimit(10))
 	if errList != nil {
