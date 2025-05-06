@@ -4,52 +4,66 @@ type InstrumentQueryInterface interface {
 	// Validation
 	Validate() error
 
+	// Asset Class
+	SetAssetClass(assetClass string) InstrumentQueryInterface
+	IsAssetClassSet() bool
+	AssetClass() string
+
+	// Exchange
+	IsExchangeSet() bool
+	Exchange() string
+	SetExchange(exchange string) InstrumentQueryInterface
+
 	// Columns
+	IsColumnsSet() bool
 	Columns() []string
+	SetColumns(columns []string) InstrumentQueryInterface
 
 	// Options
 	SetCountOnly(countOnly bool) InstrumentQueryInterface
 	IsCountOnly() bool
 
-	// Limit, Offset
-	SetLimit(limit int) InstrumentQueryInterface
-	HasLimit() bool
-	Limit() int
-	SetOffset(offset int) InstrumentQueryInterface
-	HasOffset() bool
-	Offset() int
-
-	// Order By
-	SetOrderBy(orderBy string) InstrumentQueryInterface
-	HasOrderBy() bool
-	OrderBy() string
-	SetSortDirection(sortDirection string) InstrumentQueryInterface
-	HasSortDirection() bool
-	SortDirection() string
-
 	// ID
 	SetID(id string) InstrumentQueryInterface
-	HasID() bool
+	IsIDSet() bool
 	ID() string
+
 	SetIDIn(ids []string) InstrumentQueryInterface
-	HasIDIn() bool
+	IsIDInSet() bool
 	IDIn() []string
 
+	// Limit
+	IsLimitSet() bool
+	Limit() int
+	SetLimit(limit int) InstrumentQueryInterface
+
+	// Offset
+	IsOffsetSet() bool
+	Offset() int
+	SetOffset(offset int) InstrumentQueryInterface
+
+	// Order By
+	IsOrderBySet() bool
+	OrderBy() string
+	SetOrderBy(orderBy string) InstrumentQueryInterface
+
+	// Order Direction
+	IsOrderDirectionSet() bool
+	OrderDirection() string
+	SetOrderDirection(orderDirection string) InstrumentQueryInterface
+
+	// Status
+	SetStatus(status string) InstrumentQueryInterface
+	IsStatusSet() bool
+	Status() string
+
 	// Symbol
-	SetSymbol(symbol string) InstrumentQueryInterface
-	HasSymbol() bool
+	IsSymbolSet() bool
 	Symbol() string
-	SetSymbolLike(symbolLike string) InstrumentQueryInterface
-	HasSymbolLike() bool
+	SetSymbol(symbol string) InstrumentQueryInterface
+
+	// Symbol Like
+	IsSymbolLikeSet() bool
 	SymbolLike() string
-
-	// Exchange
-	SetExchange(exchange string) InstrumentQueryInterface
-	HasExchange() bool
-	Exchange() string
-
-	// Asset Class
-	SetAssetClass(assetClass string) InstrumentQueryInterface
-	HasAssetClass() bool
-	AssetClass() string
+	SetSymbolLike(symbolLike string) InstrumentQueryInterface
 }

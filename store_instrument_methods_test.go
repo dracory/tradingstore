@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/gouniverse/sb"
 	_ "modernc.org/sqlite"
 )
 
@@ -485,7 +486,7 @@ func TestStoreInstrumentList(t *testing.T) {
 	// Test list with ordering (ascending by symbol)
 	instruments, errList = store.InstrumentList(ctx, NewInstrumentQuery().
 		SetOrderBy(COLUMN_SYMBOL).
-		SetSortDirection("ASC"))
+		SetOrderDirection(sb.ASC))
 	if errList != nil {
 		t.Fatal("unexpected error listing instruments with ordering:", errList)
 	}
@@ -499,7 +500,7 @@ func TestStoreInstrumentList(t *testing.T) {
 	// Test list with offset and limit
 	instruments, errList = store.InstrumentList(ctx, NewInstrumentQuery().
 		SetOrderBy(COLUMN_SYMBOL).
-		SetSortDirection("ASC").
+		SetOrderDirection(sb.ASC).
 		SetOffset(1).
 		SetLimit(10))
 	if errList != nil {
