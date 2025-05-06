@@ -24,6 +24,16 @@ type InstrumentInterface interface {
 	ID() string
 	SetID(id string) InstrumentInterface
 
+	Meta(key string) (string, error)
+	SetMeta(key string, value string) error
+	DeleteMeta(key string) error
+
+	Metas() (map[string]string, error)
+	SetMetas(metas map[string]string) error
+
+	Memo() string
+	SetMemo(memo string) InstrumentInterface
+
 	Name() string
 	SetName(name string) InstrumentInterface
 
@@ -35,16 +45,6 @@ type InstrumentInterface interface {
 
 	Timeframes() []string
 	SetTimeframes(timeframes []string) InstrumentInterface
-
-	Meta(key string) (string, error)
-	SetMeta(key string, value string) error
-	DeleteMeta(key string) error
-
-	Metas() (map[string]string, error)
-	SetMetas(metas map[string]string) error
-
-	Memo() string
-	SetMemo(memo string) InstrumentInterface
 
 	CreatedAt() string
 	CreatedAtCarbon() *carbon.Carbon

@@ -259,42 +259,42 @@ func (store *Store) instrumentQuery(options InstrumentQueryInterface) (selectDat
 
 	q := goqu.Dialect(store.dbDriverName).From(store.instrumentTableName)
 
-	if options.HasID() {
+	if options.IsIDSet() {
 		q = q.Where(goqu.C(COLUMN_ID).Eq(options.ID()))
 	}
 
-	if options.HasIDIn() {
+	if options.IsIDInSet() {
 		q = q.Where(goqu.C(COLUMN_ID).In(options.IDIn()))
 	}
 
-	if options.HasSymbol() {
+	if options.IsSymbolSet() {
 		q = q.Where(goqu.C(COLUMN_SYMBOL).Eq(options.Symbol()))
 	}
 
-	if options.HasSymbolLike() {
+	if options.IsSymbolLikeSet() {
 		q = q.Where(goqu.C(COLUMN_SYMBOL).Like("%" + options.SymbolLike() + "%"))
 	}
 
-	if options.HasExchange() {
+	if options.IsExchangeSet() {
 		q = q.Where(goqu.C(COLUMN_EXCHANGE).Eq(options.Exchange()))
 	}
 
-	if options.HasAssetClass() {
+	if options.IsAssetClassSet() {
 		q = q.Where(goqu.C(COLUMN_ASSET_CLASS).Eq(options.AssetClass()))
 	}
 
 	if !options.IsCountOnly() {
-		if options.HasLimit() {
+		if options.IsLimitSet() {
 			q = q.Limit(cast.ToUint(options.Limit()))
 		}
 
-		if options.HasOffset() {
+		if options.IsOffsetSet() {
 			q = q.Offset(cast.ToUint(options.Offset()))
 		}
 	}
 
-	if options.HasOrderBy() {
-		sort := lo.Ternary(options.HasSortDirection(), options.SortDirection(), sb.DESC)
+	if options.IsOrderBySet() {
+		sort := lo.Ternary(options.IsOrderDirectionSet(), options.OrderDirection(), sb.DESC)
 		if strings.EqualFold(sort, sb.ASC) {
 			q = q.Order(goqu.I(options.OrderBy()).Asc())
 		} else {
