@@ -3,48 +3,49 @@ package tradingstore
 type PriceQueryInterface interface {
 	Validate() error
 
+	IsColumnsSet() bool
 	Columns() []string
 	SetColumns(columns []string) PriceQueryInterface
 
-	HasCountOnly() bool
+	IsCountOnlySet() bool
 	IsCountOnly() bool
 	SetCountOnly(countOnly bool) PriceQueryInterface
 
-	HasTime() bool
+	IsTimeSet() bool
 	Time() string
 	SetTime(createdAt string) PriceQueryInterface
 
-	HasTimeGte() bool
+	IsTimeGteSet() bool
 	TimeGte() string
 	SetTimeGte(createdAtGte string) PriceQueryInterface
 
-	HasTimeLte() bool
+	IsTimeLteSet() bool
 	TimeLte() string
 	SetTimeLte(createdAtLte string) PriceQueryInterface
 
-	HasID() bool
+	IsIDSet() bool
 	ID() string
 	SetID(id string) PriceQueryInterface
 
-	HasIDIn() bool
+	IsIDInSet() bool
 	IDIn() []string
 	SetIDIn(idIn []string) PriceQueryInterface
 
-	HasLimit() bool
+	IsLimitSet() bool
 	Limit() int
 	SetLimit(limit int) PriceQueryInterface
 
-	HasOffset() bool
+	IsOffsetSet() bool
 	Offset() int
 	SetOffset(offset int) PriceQueryInterface
 
-	HasOrderBy() bool
+	IsOrderBySet() bool
 	OrderBy() string
 	SetOrderBy(orderBy string) PriceQueryInterface
 
-	HasSortDirection() bool
-	SortDirection() string
-	SetSortDirection(sortDirection string) PriceQueryInterface
+	IsOrderDirectionSet() bool
+	OrderDirection() string
+	SetOrderDirection(orderDirection string) PriceQueryInterface
 
 	hasProperty(name string) bool
 }

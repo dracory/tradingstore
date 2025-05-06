@@ -229,41 +229,41 @@ func (store *Store) priceQuery(symbol string, exchange string, timeframe string,
 
 	q := goqu.Dialect(store.dbDriverName).From(store.PriceTableName(symbol, exchange, timeframe))
 
-	if options.HasID() {
+	if options.IsIDSet() {
 		q = q.Where(goqu.C(COLUMN_ID).Eq(options.ID()))
 	}
 
-	if options.HasIDIn() {
+	if options.IsIDInSet() {
 		q = q.Where(goqu.C(COLUMN_ID).In(options.IDIn()))
 	}
 
-	if options.HasTime() {
+	if options.IsTimeSet() {
 		q = q.Where(goqu.C(COLUMN_TIME).Eq(options.Time()))
 	}
 
-	if options.HasTimeGte() && options.HasTimeLte() {
+	if options.IsTimeGteSet() && options.IsTimeLteSet() {
 		q = q.Where(
 			goqu.C(COLUMN_TIME).Gte(options.TimeGte()),
 			goqu.C(COLUMN_TIME).Lte(options.TimeLte()),
 		)
-	} else if options.HasTimeGte() {
+	} else if options.IsTimeGteSet() {
 		q = q.Where(goqu.C(COLUMN_TIME).Gte(options.TimeGte()))
-	} else if options.HasTimeLte() {
+	} else if options.IsTimeLteSet() {
 		q = q.Where(goqu.C(COLUMN_TIME).Lte(options.TimeLte()))
 	}
 
 	if !options.IsCountOnly() {
-		if options.HasLimit() {
+		if options.IsLimitSet() {
 			q = q.Limit(cast.ToUint(options.Limit()))
 		}
 
-		if options.HasOffset() {
+		if options.IsOffsetSet() {
 			q = q.Offset(cast.ToUint(options.Offset()))
 		}
 	}
 
-	if options.HasOrderBy() {
-		sort := lo.Ternary(options.HasSortDirection(), options.SortDirection(), sb.DESC)
+	if options.IsOrderBySet() {
+		sort := lo.Ternary(options.IsOrderDirectionSet(), options.OrderDirection(), sb.DESC)
 		if strings.EqualFold(sort, sb.ASC) {
 			q = q.Order(goqu.I(options.OrderBy()).Asc())
 		} else {
