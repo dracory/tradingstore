@@ -259,6 +259,14 @@ func (store *Store) instrumentQuery(options InstrumentQueryInterface) (selectDat
 
 	q := goqu.Dialect(store.dbDriverName).From(store.instrumentTableName)
 
+	if options.IsAssetClassSet() {
+		q = q.Where(goqu.C(COLUMN_ASSET_CLASS).Eq(options.AssetClass()))
+	}
+
+	if options.IsExchangeSet() {
+		q = q.Where(goqu.C(COLUMN_EXCHANGE).Eq(options.Exchange()))
+	}
+
 	if options.IsIDSet() {
 		q = q.Where(goqu.C(COLUMN_ID).Eq(options.ID()))
 	}
@@ -267,20 +275,16 @@ func (store *Store) instrumentQuery(options InstrumentQueryInterface) (selectDat
 		q = q.Where(goqu.C(COLUMN_ID).In(options.IDIn()))
 	}
 
+	if options.IsStatusSet() {
+		q = q.Where(goqu.C(COLUMN_STATUS).Eq(options.Status()))
+	}
+
 	if options.IsSymbolSet() {
 		q = q.Where(goqu.C(COLUMN_SYMBOL).Eq(options.Symbol()))
 	}
 
 	if options.IsSymbolLikeSet() {
 		q = q.Where(goqu.C(COLUMN_SYMBOL).Like("%" + options.SymbolLike() + "%"))
-	}
-
-	if options.IsExchangeSet() {
-		q = q.Where(goqu.C(COLUMN_EXCHANGE).Eq(options.Exchange()))
-	}
-
-	if options.IsAssetClassSet() {
-		q = q.Where(goqu.C(COLUMN_ASSET_CLASS).Eq(options.AssetClass()))
 	}
 
 	if !options.IsCountOnly() {

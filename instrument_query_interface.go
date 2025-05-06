@@ -19,7 +19,7 @@ type InstrumentQueryInterface interface {
 	Columns() []string
 	SetColumns(columns []string) InstrumentQueryInterface
 
-	// Options
+	// Count Only
 	SetCountOnly(countOnly bool) InstrumentQueryInterface
 	IsCountOnly() bool
 

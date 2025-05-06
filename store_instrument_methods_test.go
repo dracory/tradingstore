@@ -391,16 +391,19 @@ func TestStoreInstrumentList(t *testing.T) {
 
 	// Create instruments with different properties
 	instrument1 := NewInstrument().
+		SetStatus(INSTRUMENT_STATUS_ACTIVE).
 		SetSymbol("AAPL").
 		SetExchange("NASDAQ").
 		SetAssetClass(ASSET_CLASS_STOCK)
 
 	instrument2 := NewInstrument().
+		SetStatus(INSTRUMENT_STATUS_ACTIVE).
 		SetSymbol("MSFT").
 		SetExchange("NASDAQ").
 		SetAssetClass(ASSET_CLASS_STOCK)
 
 	instrument3 := NewInstrument().
+		SetStatus(INSTRUMENT_STATUS_INACTIVE).
 		SetSymbol("GBP/USD").
 		SetExchange("FOREX").
 		SetAssetClass(ASSET_CLASS_CURRENCY)
@@ -457,6 +460,15 @@ func TestStoreInstrumentList(t *testing.T) {
 	}
 	if instruments[0].AssetClass() != ASSET_CLASS_CURRENCY {
 		t.Fatal("Asset class should be CURRENCY, got:", instruments[0].AssetClass())
+	}
+
+	// Test list with status filter
+	instruments, errList = store.InstrumentList(ctx, NewInstrumentQuery().SetStatus(INSTRUMENT_STATUS_ACTIVE))
+	if errList != nil {
+		t.Fatal("unexpected error listing instruments by status:", errList)
+	}
+	if len(instruments) != 2 {
+		t.Fatal("Should list 2 instruments with status ACTIVE, got:", len(instruments))
 	}
 
 	// Test list with symbol filter
