@@ -1,12 +1,12 @@
 module github.com/dracory/tradingstore
 
-go 1.24.0
+go 1.24.5
 
 require (
-	github.com/dracory/base v0.17.0
-	github.com/dromara/carbon/v2 v2.6.4
+	github.com/dracory/database v0.2.0
+	github.com/dromara/carbon/v2 v2.6.11
 	github.com/gouniverse/dataobject v1.3.0
-	modernc.org/sqlite v1.37.0
+	modernc.org/sqlite v1.38.2
 )
 
 require (
@@ -17,19 +17,21 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
-	modernc.org/libc v1.64.0 // indirect
+	golang.org/x/crypto v0.40.0 // indirect
+	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792 // indirect
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
+	modernc.org/libc v1.66.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.10.0 // indirect
+	modernc.org/memory v1.11.0 // indirect
 )
 
 require (
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gouniverse/sb v0.8.0
+	github.com/gouniverse/sb v0.9.0
 	github.com/gouniverse/uid v1.5.0
-	github.com/samber/lo v1.50.0
-	github.com/spf13/cast v1.7.1
+	github.com/samber/lo v1.51.0
+	github.com/spf13/cast v1.9.2
 )

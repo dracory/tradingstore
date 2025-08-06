@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"log/slog"
 
-	"github.com/dracory/base/database"
+	"github.com/dracory/database"
 )
 
 // ============================================================================
