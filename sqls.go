@@ -3,7 +3,7 @@ package tradingstore
 import (
 	"strings"
 
-	"github.com/gouniverse/sb"
+	"github.com/dracory/sb"
 )
 
 func (store *Store) PriceTableName(symbol string, exchange string, timeframe string) string {
@@ -66,7 +66,10 @@ func (store *Store) sqlTablePriceCreate(symbol string, exchange string, timefram
 		})
 
 	// Create the table
-	sql := builder.CreateIfNotExists()
+	sql, err := builder.CreateIfNotExists()
+	if err != nil {
+		return ""
+	}
 
 	return sql
 }
@@ -151,7 +154,10 @@ func (store *Store) sqlTableInstrumentCreate() string {
 		})
 
 	// Create the table
-	sql := builder.CreateIfNotExists()
+	sql, err := builder.CreateIfNotExists()
+	if err != nil {
+		return ""
+	}
 
 	return sql
 }
