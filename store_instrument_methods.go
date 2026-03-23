@@ -9,7 +9,7 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/dracory/database"
-	"github.com/gouniverse/sb"
+	"github.com/dracory/sb"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
 )

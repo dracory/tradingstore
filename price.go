@@ -1,9 +1,9 @@
 package tradingstore
 
 import (
+	"github.com/dracory/dataobject"
+	"github.com/dracory/uid"
 	"github.com/dromara/carbon/v2"
-	"github.com/gouniverse/dataobject"
-	"github.com/gouniverse/uid"
 	"github.com/spf13/cast"
 )
 
