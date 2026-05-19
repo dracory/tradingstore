@@ -7,13 +7,11 @@ import (
 
 // StoreInterface defines the interface for a store
 type StoreInterface interface {
-	// AutoMigrateInstruments automatically creates the schema if it does not exist
-	AutoMigrateInstruments(ctx context.Context) error
+	// MigrateDown drops the trading store tables
+	MigrateDown(ctx context.Context, tx ...*sql.Tx) error
 
-	// AutoMigratePrices automatically creates the price tables if they do not exist
-	// It will create a price table for each instrument and each timeframe
-	// You will need to call this method when you create a new instrument
-	AutoMigratePrices(ctx context.Context) error
+	// MigrateUp creates the trading store tables
+	MigrateUp(ctx context.Context, tx ...*sql.Tx) error
 
 	// DB returns the underlying sql.DB connection
 	DB() *sql.DB

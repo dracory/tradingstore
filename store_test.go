@@ -46,7 +46,7 @@ func initStore() (StoreInterface, error) {
 		return nil, err
 	}
 
-	err = store.AutoMigratePrices(context.Background())
+	err = store.MigrateUp(context.Background())
 	if err != nil {
 		return nil, err
 	}
