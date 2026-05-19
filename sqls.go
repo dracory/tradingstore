@@ -180,3 +180,25 @@ func (store *Store) sqlIndexesCreate() string {
 
 	return sql
 }
+
+// sqlTableInstrumentDrop returns a SQL string for dropping the instrument table
+func (store *Store) sqlTableInstrumentDrop() (string, error) {
+	sql, err := sb.NewBuilder(sb.DatabaseDriverName(store.db)).
+		Table(store.instrumentTableName).
+		Drop()
+	if err != nil {
+		return "", err
+	}
+	return sql, nil
+}
+
+// sqlTablePriceDrop returns a SQL string for dropping a price table
+func (store *Store) sqlTablePriceDrop(symbol string, exchange string, timeframe string) (string, error) {
+	sql, err := sb.NewBuilder(sb.DatabaseDriverName(store.db)).
+		Table(store.PriceTableName(symbol, exchange, timeframe)).
+		Drop()
+	if err != nil {
+		return "", err
+	}
+	return sql, nil
+}

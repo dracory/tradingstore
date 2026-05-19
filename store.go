@@ -46,45 +46,94 @@ type Store struct {
 // == PUBLIC METHODS
 // ============================================================================
 
-// AutoMigrateInstruments auto migrates the instrument table
-func (store *Store) AutoMigrateInstruments(ctx context.Context) error {
+// MigrateUp creates the trading store tables
+func (store *Store) MigrateUp(ctx context.Context, tx ...*sql.Tx) error {
+	var txToUse *sql.Tx
+	if len(tx) > 0 {
+		txToUse = tx[0]
+	}
+
+	// Create instrument table
 	sql := store.sqlTableInstrumentCreate()
+	var errExec error
+	if txToUse != nil {
+		_, errExec = txToUse.ExecContext(ctx, sql)
+	} else {
+		_, errExec = store.db.ExecContext(ctx, sql)
+	}
+	if errExec != nil {
+		return errExec
+	}
 
-	_, err := store.db.Exec(sql)
-
+	// Create price tables for each instrument and timeframe
+	instruments, err := store.InstrumentList(ctx, InstrumentQuery())
 	if err != nil {
 		return err
+	}
+
+	for _, instrument := range instruments {
+		timeframes := instrument.Timeframes()
+		for _, timeframe := range timeframes {
+			sql := store.sqlTablePriceCreate(instrument.Symbol(), instrument.Exchange(), timeframe)
+			if txToUse != nil {
+				_, errExec = txToUse.ExecContext(ctx, sql)
+			} else {
+				_, errExec = store.db.ExecContext(ctx, sql)
+			}
+			if errExec != nil {
+				return errExec
+			}
+		}
 	}
 
 	return nil
 }
 
-// AutoMigratePrices auto migrates the price tables
-// It will create a price table for each instrument and each timeframe
-// You will need to call this method when you create a new instrument
-func (store *Store) AutoMigratePrices(ctx context.Context) error {
-	instruments, err := store.InstrumentList(ctx, InstrumentQuery())
+// MigrateDown drops the trading store tables
+func (store *Store) MigrateDown(ctx context.Context, tx ...*sql.Tx) error {
+	var txToUse *sql.Tx
+	if len(tx) > 0 {
+		txToUse = tx[0]
+	}
 
+	// Drop price tables for each instrument and timeframe
+	instruments, err := store.InstrumentList(ctx, InstrumentQuery())
 	if err != nil {
 		return err
 	}
 
-	sqls := []string{}
 	for _, instrument := range instruments {
 		timeframes := instrument.Timeframes()
-
 		for _, timeframe := range timeframes {
-			sql := store.sqlTablePriceCreate(instrument.Symbol(), instrument.Exchange(), timeframe)
-			sqls = append(sqls, sql)
+			sql, err := store.sqlTablePriceDrop(instrument.Symbol(), instrument.Exchange(), timeframe)
+			if err != nil {
+				return err
+			}
+			var errExec error
+			if txToUse != nil {
+				_, errExec = txToUse.ExecContext(ctx, sql)
+			} else {
+				_, errExec = store.db.ExecContext(ctx, sql)
+			}
+			if errExec != nil {
+				return errExec
+			}
 		}
 	}
 
-	for _, sql := range sqls {
-		_, err := store.db.Exec(sql)
-
-		if err != nil {
-			return err
-		}
+	// Drop instrument table
+	sql, err := store.sqlTableInstrumentDrop()
+	if err != nil {
+		return err
+	}
+	var errExec error
+	if txToUse != nil {
+		_, errExec = txToUse.ExecContext(ctx, sql)
+	} else {
+		_, errExec = store.db.ExecContext(ctx, sql)
+	}
+	if errExec != nil {
+		return errExec
 	}
 
 	return nil
