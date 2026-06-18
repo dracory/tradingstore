@@ -2,6 +2,55 @@ package tradingstore
 
 import "errors"
 
+// PriceQueryInterface defines the interface for price query options.
+type PriceQueryInterface interface {
+	Validate() error
+
+	IsColumnsSet() bool
+	Columns() []string
+	SetColumns(columns []string) PriceQueryInterface
+
+	IsCountOnlySet() bool
+	IsCountOnly() bool
+	SetCountOnly(countOnly bool) PriceQueryInterface
+
+	IsTimeSet() bool
+	Time() string
+	SetTime(createdAt string) PriceQueryInterface
+
+	IsTimeGteSet() bool
+	TimeGte() string
+	SetTimeGte(createdAtGte string) PriceQueryInterface
+
+	IsTimeLteSet() bool
+	TimeLte() string
+	SetTimeLte(createdAtLte string) PriceQueryInterface
+
+	IsIDSet() bool
+	ID() string
+	SetID(id string) PriceQueryInterface
+
+	IsIDInSet() bool
+	IDIn() []string
+	SetIDIn(idIn []string) PriceQueryInterface
+
+	IsLimitSet() bool
+	Limit() int
+	SetLimit(limit int) PriceQueryInterface
+
+	IsOffsetSet() bool
+	Offset() int
+	SetOffset(offset int) PriceQueryInterface
+
+	IsOrderBySet() bool
+	OrderBy() string
+	SetOrderBy(orderBy string) PriceQueryInterface
+
+	IsOrderDirectionSet() bool
+	OrderDirection() string
+	SetOrderDirection(orderDirection string) PriceQueryInterface
+}
+
 // PriceQuery is a shortcut for NewPriceQuery
 func PriceQuery() PriceQueryInterface {
 	return NewPriceQuery()
@@ -71,13 +120,11 @@ func (c *priceQueryImplementation) Columns() []string {
 	if !c.hasProperty("columns") {
 		return []string{}
 	}
-
 	return c.properties["columns"].([]string)
 }
 
 func (c *priceQueryImplementation) SetColumns(columns []string) PriceQueryInterface {
 	c.properties["columns"] = columns
-
 	return c
 }
 
@@ -89,13 +136,11 @@ func (c *priceQueryImplementation) IsCountOnly() bool {
 	if !c.IsCountOnlySet() {
 		return false
 	}
-
 	return c.properties["count_only"].(bool)
 }
 
 func (c *priceQueryImplementation) SetCountOnly(countOnly bool) PriceQueryInterface {
 	c.properties["count_only"] = countOnly
-
 	return c
 }
 
@@ -107,13 +152,11 @@ func (c *priceQueryImplementation) ID() string {
 	if !c.hasProperty("id") {
 		return ""
 	}
-
 	return c.properties["id"].(string)
 }
 
 func (c *priceQueryImplementation) SetID(id string) PriceQueryInterface {
 	c.properties["id"] = id
-
 	return c
 }
 
@@ -125,13 +168,11 @@ func (c *priceQueryImplementation) IDIn() []string {
 	if !c.hasProperty("id_in") {
 		return []string{}
 	}
-
 	return c.properties["id_in"].([]string)
 }
 
 func (c *priceQueryImplementation) SetIDIn(idIn []string) PriceQueryInterface {
 	c.properties["id_in"] = idIn
-
 	return c
 }
 
@@ -143,13 +184,11 @@ func (c *priceQueryImplementation) Limit() int {
 	if !c.IsLimitSet() {
 		return 0
 	}
-
 	return c.properties["limit"].(int)
 }
 
 func (c *priceQueryImplementation) SetLimit(limit int) PriceQueryInterface {
 	c.properties["limit"] = limit
-
 	return c
 }
 
@@ -161,13 +200,11 @@ func (c *priceQueryImplementation) Offset() int {
 	if !c.IsOffsetSet() {
 		return 0
 	}
-
 	return c.properties["offset"].(int)
 }
 
 func (c *priceQueryImplementation) SetOffset(offset int) PriceQueryInterface {
 	c.properties["offset"] = offset
-
 	return c
 }
 
@@ -179,13 +216,11 @@ func (c *priceQueryImplementation) OrderBy() string {
 	if !c.IsOrderBySet() {
 		return ""
 	}
-
 	return c.properties["order_by"].(string)
 }
 
 func (c *priceQueryImplementation) SetOrderBy(orderBy string) PriceQueryInterface {
 	c.properties["order_by"] = orderBy
-
 	return c
 }
 
@@ -197,13 +232,11 @@ func (c *priceQueryImplementation) OrderDirection() string {
 	if !c.IsOrderDirectionSet() {
 		return ""
 	}
-
 	return c.properties["order_direction"].(string)
 }
 
 func (c *priceQueryImplementation) SetOrderDirection(orderDirection string) PriceQueryInterface {
 	c.properties["order_direction"] = orderDirection
-
 	return c
 }
 
@@ -215,13 +248,11 @@ func (c *priceQueryImplementation) Time() string {
 	if !c.IsTimeSet() {
 		return ""
 	}
-
 	return c.properties["time"].(string)
 }
 
 func (c *priceQueryImplementation) SetTime(time string) PriceQueryInterface {
 	c.properties["time"] = time
-
 	return c
 }
 
@@ -233,13 +264,11 @@ func (c *priceQueryImplementation) TimeGte() string {
 	if !c.IsTimeGteSet() {
 		return ""
 	}
-
 	return c.properties["time_gte"].(string)
 }
 
 func (c *priceQueryImplementation) SetTimeGte(timeGte string) PriceQueryInterface {
 	c.properties["time_gte"] = timeGte
-
 	return c
 }
 
@@ -251,12 +280,10 @@ func (c *priceQueryImplementation) TimeLte() string {
 	if !c.IsTimeLteSet() {
 		return ""
 	}
-
 	return c.properties["time_lte"].(string)
 }
 
 func (c *priceQueryImplementation) SetTimeLte(timeLte string) PriceQueryInterface {
 	c.properties["time_lte"] = timeLte
-
 	return c
 }
