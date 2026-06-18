@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/dracory/sb"
 	"github.com/dromara/carbon/v2"
 	_ "modernc.org/sqlite"
 )
@@ -498,7 +497,7 @@ func TestStoreInstrumentList(t *testing.T) {
 	// Test list with ordering (ascending by symbol)
 	instruments, errList = store.InstrumentList(ctx, NewInstrumentQuery().
 		SetOrderBy(COLUMN_SYMBOL).
-		SetOrderDirection(sb.ASC))
+		SetOrderDirection("asc"))
 	if errList != nil {
 		t.Fatal("unexpected error listing instruments with ordering:", errList)
 	}
@@ -512,7 +511,7 @@ func TestStoreInstrumentList(t *testing.T) {
 	// Test list with offset and limit
 	instruments, errList = store.InstrumentList(ctx, NewInstrumentQuery().
 		SetOrderBy(COLUMN_SYMBOL).
-		SetOrderDirection(sb.ASC).
+		SetOrderDirection("asc").
 		SetOffset(1).
 		SetLimit(10))
 	if errList != nil {
@@ -627,14 +626,27 @@ func TestStoreInstrumentSoftDelete(t *testing.T) {
 		t.Fatal("unexpected error soft deleting instrument:", err)
 	}
 
-	// Fetch again and check soft deleted
-	instrumentSoftDeleted, errFindAfter := store.InstrumentFindByID(ctx, instrument.ID())
+	// Fetch again without soft deleted included - should not find it
+	instrumentAfterSoftDelete, errFindAfter := store.InstrumentFindByID(ctx, instrument.ID())
 	if errFindAfter != nil {
 		t.Fatal("unexpected error finding instrument after soft delete:", errFindAfter)
 	}
-	if instrumentSoftDeleted == nil {
-		t.Fatal("Instrument should still exist after soft delete")
+	if instrumentAfterSoftDelete != nil {
+		t.Fatal("Instrument should be hidden after soft delete")
 	}
+
+	// Fetch with soft deleted included - should find it
+	instrumentsWithDeleted, errList := store.InstrumentList(ctx, NewInstrumentQuery().
+		SetID(instrument.ID()).
+		SetSoftDeletedIncluded(true).
+		SetLimit(1))
+	if errList != nil {
+		t.Fatal("unexpected error listing instruments with soft deleted:", errList)
+	}
+	if len(instrumentsWithDeleted) != 1 {
+		t.Fatal("Instrument should still exist after soft delete when included")
+	}
+	instrumentSoftDeleted := instrumentsWithDeleted[0]
 	if instrumentSoftDeleted.SoftDeletedAtCarbon().ToDateTimeString() != carbon.Now().ToDateTimeString() {
 		t.Fatal("Instrument should be soft deleted (SoftDeletedAt should be set to now)")
 	}
@@ -680,14 +692,27 @@ func TestStoreInstrumentSoftDeleteByID(t *testing.T) {
 		t.Fatal("unexpected error soft deleting instrument by ID:", err)
 	}
 
-	// Fetch again and check soft deleted
-	instrumentSoftDeleted, errFindAfter := store.InstrumentFindByID(ctx, instrument.ID())
+	// Fetch again without soft deleted included - should not find it
+	instrumentAfterSoftDelete, errFindAfter := store.InstrumentFindByID(ctx, instrument.ID())
 	if errFindAfter != nil {
 		t.Fatal("unexpected error finding instrument after soft delete by ID:", errFindAfter)
 	}
-	if instrumentSoftDeleted == nil {
-		t.Fatal("Instrument should still exist after soft delete by ID")
+	if instrumentAfterSoftDelete != nil {
+		t.Fatal("Instrument should be hidden after soft delete by ID")
 	}
+
+	// Fetch with soft deleted included - should find it
+	instrumentsWithDeleted, errList := store.InstrumentList(ctx, NewInstrumentQuery().
+		SetID(instrument.ID()).
+		SetSoftDeletedIncluded(true).
+		SetLimit(1))
+	if errList != nil {
+		t.Fatal("unexpected error listing instruments with soft deleted:", errList)
+	}
+	if len(instrumentsWithDeleted) != 1 {
+		t.Fatal("Instrument should still exist after soft delete by ID when included")
+	}
+	instrumentSoftDeleted := instrumentsWithDeleted[0]
 	if instrumentSoftDeleted.SoftDeletedAtCarbon().ToDateTimeString() != carbon.Now().ToDateTimeString() {
 		t.Fatal("Instrument should be soft deleted (SoftDeletedAt should be set to now) after soft delete by ID", instrumentSoftDeleted.SoftDeletedAt())
 	}

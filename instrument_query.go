@@ -5,6 +5,66 @@ import (
 	"strings"
 )
 
+// InstrumentQueryInterface defines the interface for instrument query options.
+type InstrumentQueryInterface interface {
+	Validate() error
+
+	SetAssetClass(assetClass string) InstrumentQueryInterface
+	IsAssetClassSet() bool
+	AssetClass() string
+
+	IsExchangeSet() bool
+	Exchange() string
+	SetExchange(exchange string) InstrumentQueryInterface
+
+	IsColumnsSet() bool
+	Columns() []string
+	SetColumns(columns []string) InstrumentQueryInterface
+
+	SetCountOnly(countOnly bool) InstrumentQueryInterface
+	IsCountOnly() bool
+
+	SetID(id string) InstrumentQueryInterface
+	IsIDSet() bool
+	ID() string
+
+	SetIDIn(ids []string) InstrumentQueryInterface
+	IsIDInSet() bool
+	IDIn() []string
+
+	IsLimitSet() bool
+	Limit() int
+	SetLimit(limit int) InstrumentQueryInterface
+
+	IsOffsetSet() bool
+	Offset() int
+	SetOffset(offset int) InstrumentQueryInterface
+
+	IsOrderBySet() bool
+	OrderBy() string
+	SetOrderBy(orderBy string) InstrumentQueryInterface
+
+	IsOrderDirectionSet() bool
+	OrderDirection() string
+	SetOrderDirection(orderDirection string) InstrumentQueryInterface
+
+	SetStatus(status string) InstrumentQueryInterface
+	IsStatusSet() bool
+	Status() string
+
+	IsSymbolSet() bool
+	Symbol() string
+	SetSymbol(symbol string) InstrumentQueryInterface
+
+	IsSymbolLikeSet() bool
+	SymbolLike() string
+	SetSymbolLike(symbolLike string) InstrumentQueryInterface
+
+	IsSoftDeletedIncluded() bool
+	SoftDeletedIncluded() bool
+	SetSoftDeletedIncluded(softDeletedIncluded bool) InstrumentQueryInterface
+}
+
 // InstrumentQuery is a shortcut to create a new instrument query
 func InstrumentQuery() InstrumentQueryInterface {
 	return NewInstrumentQuery()
@@ -67,6 +127,10 @@ type instrumentQueryImplementation struct {
 	// symbolLike
 	isSymbolLikeSet bool
 	symbolLike      string
+
+	// softDeletedIncluded
+	isSoftDeletedIncluded bool
+	softDeletedIncluded   bool
 }
 
 var _ InstrumentQueryInterface = (*instrumentQueryImplementation)(nil) // verify interface is implemented
@@ -150,7 +214,6 @@ func (iq *instrumentQueryImplementation) Columns() []string {
 	if iq.IsColumnsSet() {
 		return iq.columns
 	}
-
 	return []string{"*"}
 }
 
@@ -164,7 +227,6 @@ func (iq *instrumentQueryImplementation) SetColumns(columns []string) Instrument
 // SetCountOnly sets the count only option
 func (iq *instrumentQueryImplementation) SetCountOnly(countOnly bool) InstrumentQueryInterface {
 	iq.countOnly = countOnly
-	// not needed as bool is already set: iq.isCountOnlySet = true
 	return iq
 }
 
@@ -370,5 +432,25 @@ func (iq *instrumentQueryImplementation) SymbolLike() string {
 func (iq *instrumentQueryImplementation) SetSymbolLike(symbolLike string) InstrumentQueryInterface {
 	iq.symbolLike = symbolLike
 	iq.isSymbolLikeSet = true
+	return iq
+}
+
+// IsSoftDeletedIncluded returns true if soft deleted records should be included
+func (iq *instrumentQueryImplementation) IsSoftDeletedIncluded() bool {
+	return iq.isSoftDeletedIncluded
+}
+
+// SoftDeletedIncluded returns true if soft deleted records should be included
+func (iq *instrumentQueryImplementation) SoftDeletedIncluded() bool {
+	if iq.IsSoftDeletedIncluded() {
+		return iq.softDeletedIncluded
+	}
+	return false
+}
+
+// SetSoftDeletedIncluded sets whether soft deleted records should be included
+func (iq *instrumentQueryImplementation) SetSoftDeletedIncluded(softDeletedIncluded bool) InstrumentQueryInterface {
+	iq.softDeletedIncluded = softDeletedIncluded
+	iq.isSoftDeletedIncluded = true
 	return iq
 }
