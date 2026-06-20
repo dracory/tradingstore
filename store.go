@@ -567,7 +567,8 @@ func (store *storeImplementation) PriceUpdate(ctx context.Context, symbol string
 
 // buildInstrumentQuery returns a query for instruments based on the given query options
 func (store *storeImplementation) buildInstrumentQuery(options InstrumentQueryInterface) contractsorm.Query {
-	q := store.db.Query()
+	// Use Model() to enable neat's automatic soft delete handling via SoftDeletesMaxDate
+	q := store.db.Query().Model(&instrumentImplementation{})
 
 	if options == nil {
 		return q
@@ -623,11 +624,9 @@ func (store *storeImplementation) buildInstrumentQuery(options InstrumentQueryIn
 		q = q.OrderBy(options.OrderBy(), sortOrder)
 	}
 
-	// Soft delete filtering
+	// Handle soft delete filtering via neat's automatic handling (SoftDeletesMaxDate)
 	if options.IsSoftDeletedIncluded() && options.SoftDeletedIncluded() {
 		q = q.WithSoftDeleted()
-	} else {
-		q = q.Where(COLUMN_SOFT_DELETED_AT+" = ?", carbon.Parse(MAX_DATETIME, carbon.UTC).StdTime())
 	}
 
 	return q
