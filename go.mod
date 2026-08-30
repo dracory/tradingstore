@@ -3,7 +3,7 @@ module github.com/dracory/tradingstore
 go 1.26.3
 
 require (
-	github.com/dracory/neat v0.41.0
+	github.com/dracory/neat v0.42.0
 	github.com/dromara/carbon/v2 v2.6.17
 	github.com/spf13/cast v1.10.0
 	modernc.org/sqlite v1.57.0
