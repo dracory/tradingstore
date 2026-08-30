@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log/slog"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -180,7 +181,9 @@ func (store *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) 
 // Note: neat's SQLite grammar has a bug where CompileUnique delegates to
 // CompileIndex, producing a regular index instead of a unique one. We work
 // around this by executing a raw CREATE UNIQUE INDEX statement after the
-// schema create.
+// schema create. The raw SQL uses dialect-aware identifier quoting so it
+// works on SQLite (double quotes), MySQL/MariaDB (backticks), and PostgreSQL
+// (double quotes).
 func (store *storeImplementation) createPriceTable(tableName string) error {
 	if err := store.db.Schema().Create(tableName, func(table contractsschema.Blueprint) {
 		table.String(COLUMN_ID, 40)
@@ -200,9 +203,10 @@ func (store *storeImplementation) createPriceTable(tableName string) error {
 
 	// Workaround for neat SQLite grammar bug: table.Unique() generates a
 	// regular CREATE INDEX instead of CREATE UNIQUE INDEX. Create the unique
-	// index via raw SQL instead.
+	// index via raw SQL instead, using dialect-aware identifier quoting.
 	uniqueIndexName := tableName + "_" + COLUMN_TIME + "_unique"
-	uniqueIndexSQL := "CREATE UNIQUE INDEX IF NOT EXISTS \"" + uniqueIndexName + "\" ON \"" + tableName + "\" (\"" + COLUMN_TIME + "\")"
+	quoteChar := store.identifierQuoteChar()
+	uniqueIndexSQL := "CREATE UNIQUE INDEX IF NOT EXISTS " + quoteIdentifier(uniqueIndexName, quoteChar) + " ON " + quoteIdentifier(tableName, quoteChar) + " (" + quoteIdentifier(COLUMN_TIME, quoteChar) + ")"
 
 	db, err := store.db.DB()
 	if err != nil {
@@ -213,6 +217,29 @@ func (store *storeImplementation) createPriceTable(tableName string) error {
 	}
 
 	return nil
+}
+
+// identifierQuoteChar returns the identifier quote character for the current
+// database dialect. MySQL/MariaDB use backticks; all others (SQLite,
+// PostgreSQL, etc.) use double quotes. This mirrors neat's own
+// quoteIdentifier logic in the query builder.
+func (store *storeImplementation) identifierQuoteChar() string {
+	db, err := store.db.DB()
+	if err != nil || db == nil {
+		return "\""
+	}
+	driverName := reflect.ValueOf(db.Driver()).Type().String()
+	if strings.Contains(driverName, "mysql") || strings.Contains(driverName, "maria") {
+		return "`"
+	}
+	return "\""
+}
+
+// quoteIdentifier wraps an identifier in the given quote character, escaping
+// any embedded quote characters by doubling them.
+func quoteIdentifier(name string, quoteChar string) string {
+	escaped := strings.ReplaceAll(name, quoteChar, quoteChar+quoteChar)
+	return quoteChar + escaped + quoteChar
 }
 
 // MigrateDown drops the trading store tables
