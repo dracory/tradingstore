@@ -112,13 +112,7 @@ func main() {
         log.Fatal(err)
     }
 
-    // Create pricing tables
-    err := store.AutomigratePrices(ctx)
-
-    if err != nil {
-        log.Fatal(err)
-    }
-
+    // Price tables are auto-created for each timeframe in InstrumentCreate.
     // Create a price entry
     price := NewPrice().
         SetTime("2023-06-01T16:00:00Z").
@@ -157,8 +151,8 @@ The TradingStore library is organized into three main components:
 classDiagram
     class StoreInterface {
         <<interface>>
-        +AutoMigrateInstruments(ctx) error
-        +AutoMigratePrices(ctx) error
+        +MigrateUp(ctx, tx) error
+        +MigrateDown(ctx, tx) error
         +DB() *sql.DB
         +EnableDebug(debug bool)
         +InstrumentCount(ctx, options) (int64, error)
@@ -181,23 +175,22 @@ classDiagram
         +PriceUpdate(ctx, symbol, exchange, timeframe, price) error
     }
 
-    class Store {
+    class storeImplementation {
         -priceTableNamePrefix string
         -instrumentTableName string
         -useMultipleExchanges bool
-        -db *sql.DB
-        -dbDriverName string
         -automigrateEnabled bool
         -debugEnabled bool
-        -sqlLogger *slog.Logger
-        +AutoMigrateInstruments(ctx) error
-        +AutoMigratePrices(ctx) error
+        -logger *slog.Logger
+        -db *neat.Database
+        +MigrateUp(ctx, tx) error
+        +MigrateDown(ctx, tx) error
         +DB() *sql.DB
         +EnableDebug(debug bool)
         +PriceTableName(symbol, exchange, timeframe) string
     }
 
-    StoreInterface <|.. Store
+    StoreInterface <|.. storeImplementation
 ```
 
 ### Price Component
@@ -206,9 +199,6 @@ classDiagram
 classDiagram
     class PriceInterface {
         <<interface>>
-        +Data() map[string]string
-        +DataChanged() map[string]string
-        +MarkAsNotDirty()
         +ID() string
         +SetID(id string) PriceInterface
         +Close() string
@@ -231,48 +221,55 @@ classDiagram
         +SetVolume(volume string) PriceInterface
     }
 
-    class Price {
-        +dataobject.DataObject
+    class priceImplementation {
+        +orm.ShortID
+        -OpenField string
+        -HighField string
+        -LowField string
+        -CloseField string
+        -VolumeField string
+        -TimeField string
     }
 
     class PriceQueryInterface {
         <<interface>>
         +Validate() error
+        +IsColumnsSet() bool
         +Columns() []string
         +SetColumns(columns []string) PriceQueryInterface
-        +HasCountOnly() bool
+        +IsCountOnlySet() bool
         +IsCountOnly() bool
         +SetCountOnly(countOnly bool) PriceQueryInterface
-        +HasTime() bool
+        +IsTimeSet() bool
         +Time() string
-        +SetTime(createdAt string) PriceQueryInterface
-        +HasTimeGte() bool
+        +SetTime(time string) PriceQueryInterface
+        +IsTimeGteSet() bool
         +TimeGte() string
-        +SetTimeGte(createdAtGte string) PriceQueryInterface
-        +HasTimeLte() bool
+        +SetTimeGte(timeGte string) PriceQueryInterface
+        +IsTimeLteSet() bool
         +TimeLte() string
-        +SetTimeLte(createdAtLte string) PriceQueryInterface
-        +HasID() bool
+        +SetTimeLte(timeLte string) PriceQueryInterface
+        +IsIDSet() bool
         +ID() string
         +SetID(id string) PriceQueryInterface
-        +HasIDIn() bool
+        +IsIDInSet() bool
         +IDIn() []string
         +SetIDIn(idIn []string) PriceQueryInterface
-        +HasLimit() bool
+        +IsLimitSet() bool
         +Limit() int
         +SetLimit(limit int) PriceQueryInterface
-        +HasOffset() bool
+        +IsOffsetSet() bool
         +Offset() int
         +SetOffset(offset int) PriceQueryInterface
-        +HasOrderBy() bool
+        +IsOrderBySet() bool
         +OrderBy() string
         +SetOrderBy(orderBy string) PriceQueryInterface
-        +HasSortDirection() bool
-        +SortDirection() string
-        +SetSortDirection(sortDirection string) PriceQueryInterface
+        +IsOrderDirectionSet() bool
+        +OrderDirection() string
+        +SetOrderDirection(orderDirection string) PriceQueryInterface
     }
 
-    PriceInterface <|.. Price
+    PriceInterface <|.. priceImplementation
 ```
 
 ### Instrument Component
@@ -281,9 +278,6 @@ classDiagram
 classDiagram
     class InstrumentInterface {
         <<interface>>
-        +Data() map[string]string
-        +DataChanged() map[string]string
-        +MarkAsNotDirty()
         +AssetClass() string
         +SetAssetClass(assetClass string) InstrumentInterface
         +Exchange() string
@@ -292,6 +286,13 @@ classDiagram
         +SetDescription(description string) InstrumentInterface
         +ID() string
         +SetID(id string) InstrumentInterface
+        +Meta(key string) (string, error)
+        +SetMeta(key string, value string) error
+        +DeleteMeta(key string) error
+        +Metas() (map[string]string, error)
+        +SetMetas(metas map[string]string) error
+        +Memo() string
+        +SetMemo(memo string) InstrumentInterface
         +Name() string
         +SetName(name string) InstrumentInterface
         +Status() string
@@ -300,13 +301,6 @@ classDiagram
         +SetSymbol(symbol string) InstrumentInterface
         +Timeframes() []string
         +SetTimeframes(timeframes []string) InstrumentInterface
-        +Meta(key string) (string, error)
-        +SetMeta(key string, value string) error
-        +DeleteMeta(key string) error
-        +Metas() (map[string]string, error)
-        +SetMetas(metas map[string]string) error
-        +Memo() string
-        +SetMemo(memo string) InstrumentInterface
         +CreatedAt() string
         +CreatedAtCarbon() *carbon.Carbon
         +SetCreatedAt(createdAt string) InstrumentInterface
@@ -316,52 +310,72 @@ classDiagram
         +SoftDeletedAt() string
         +SoftDeletedAtCarbon() *carbon.Carbon
         +SetSoftDeletedAt(softDeletedAt string) InstrumentInterface
+        +IsSoftDeleted() bool
     }
 
-    class Instrument {
-        +dataobject.DataObject
+    class instrumentImplementation {
+        +orm.ShortID
+        -SymbolField string
+        -ExchangeField string
+        -AssetClassField string
+        -NameField string
+        -StatusField string
+        -DescriptionField string
+        -MemoField string
+        -MetasField string
+        -TimeframesField string
+        +orm.CreatedAt
+        +orm.UpdatedAt
+        +soft_delete.SoftDeletesMaxDate
     }
 
     class InstrumentQueryInterface {
         <<interface>>
-        +SetID(id string) InstrumentQueryInterface
-        +HasID() bool
-        +ID() string
-        +SetIDIn(idIn []string) InstrumentQueryInterface
-        +HasIDIn() bool
-        +IDIn() []string
-        +SetSymbol(symbol string) InstrumentQueryInterface
-        +HasSymbol() bool
-        +Symbol() string
-        +SetSymbolLike(symbolLike string) InstrumentQueryInterface
-        +HasSymbolLike() bool
-        +SymbolLike() string
+        +Validate() error
         +SetAssetClass(assetClass string) InstrumentQueryInterface
-        +HasAssetClass() bool
+        +IsAssetClassSet() bool
         +AssetClass() string
         +SetExchange(exchange string) InstrumentQueryInterface
-        +HasExchange() bool
+        +IsExchangeSet() bool
         +Exchange() string
+        +SetColumns(columns []string) InstrumentQueryInterface
+        +IsColumnsSet() bool
+        +Columns() []string
+        +SetCountOnly(countOnly bool) InstrumentQueryInterface
+        +IsCountOnly() bool
+        +SetID(id string) InstrumentQueryInterface
+        +IsIDSet() bool
+        +ID() string
+        +SetIDIn(ids []string) InstrumentQueryInterface
+        +IsIDInSet() bool
+        +IDIn() []string
         +SetLimit(limit int) InstrumentQueryInterface
-        +HasLimit() bool
+        +IsLimitSet() bool
         +Limit() int
         +SetOffset(offset int) InstrumentQueryInterface
-        +HasOffset() bool
+        +IsOffsetSet() bool
         +Offset() int
         +SetOrderBy(orderBy string) InstrumentQueryInterface
-        +HasOrderBy() bool
+        +IsOrderBySet() bool
         +OrderBy() string
-        +SetSortDirection(sortDirection string) InstrumentQueryInterface
-        +HasSortDirection() bool
-        +SortDirection() string
-        +SetCountOnly(countOnly bool) InstrumentQueryInterface
-        +HasCountOnly() bool
-        +IsCountOnly() bool
-        +Columns() []string
-        +SetColumns(columns []string) InstrumentQueryInterface
+        +SetOrderDirection(orderDirection string) InstrumentQueryInterface
+        +IsOrderDirectionSet() bool
+        +OrderDirection() string
+        +SetStatus(status string) InstrumentQueryInterface
+        +IsStatusSet() bool
+        +Status() string
+        +SetSymbol(symbol string) InstrumentQueryInterface
+        +IsSymbolSet() bool
+        +Symbol() string
+        +SetSymbolLike(symbolLike string) InstrumentQueryInterface
+        +IsSymbolLikeSet() bool
+        +SymbolLike() string
+        +SetSoftDeletedIncluded(softDeletedIncluded bool) InstrumentQueryInterface
+        +IsSoftDeletedIncluded() bool
+        +SoftDeletedIncluded() bool
     }
 
-    InstrumentInterface <|.. Instrument
+    InstrumentInterface <|.. instrumentImplementation
 ```
 
 ## License

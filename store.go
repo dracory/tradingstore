@@ -3,6 +3,7 @@ package tradingstore
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"os"
@@ -163,17 +164,7 @@ func (store *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) 
 		for _, timeframe := range timeframes {
 			tableName := store.PriceTableName(instrument.Symbol(), instrument.Exchange(), timeframe)
 			if !store.db.Schema().HasTable(tableName) {
-				err := store.db.Schema().Create(tableName, func(table contractsschema.Blueprint) {
-					table.String(COLUMN_ID, 40)
-					table.Primary(COLUMN_ID)
-					table.Decimal(COLUMN_OPEN).Total(20).Places(8)
-					table.Decimal(COLUMN_HIGH).Total(20).Places(8)
-					table.Decimal(COLUMN_LOW).Total(20).Places(8)
-					table.Decimal(COLUMN_CLOSE).Total(20).Places(8)
-					table.BigInteger(COLUMN_VOLUME)
-					table.DateTime(COLUMN_TIME)
-				})
-				if err != nil {
+				if err := store.createPriceTable(tableName); err != nil {
 					return err
 				}
 			}
@@ -181,6 +172,23 @@ func (store *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) 
 	}
 
 	return nil
+}
+
+// createPriceTable creates a single price table with the standard OHLCV schema,
+// including an index and unique constraint on the time column.
+func (store *storeImplementation) createPriceTable(tableName string) error {
+	return store.db.Schema().Create(tableName, func(table contractsschema.Blueprint) {
+		table.String(COLUMN_ID, 40)
+		table.Primary(COLUMN_ID)
+		table.Decimal(COLUMN_OPEN).Total(20).Places(8)
+		table.Decimal(COLUMN_HIGH).Total(20).Places(8)
+		table.Decimal(COLUMN_LOW).Total(20).Places(8)
+		table.Decimal(COLUMN_CLOSE).Total(20).Places(8)
+		table.BigInteger(COLUMN_VOLUME)
+		table.DateTime(COLUMN_TIME)
+		table.Index(COLUMN_TIME)
+		table.Unique(COLUMN_TIME)
+	})
 }
 
 // MigrateDown drops the trading store tables
@@ -244,7 +252,8 @@ func (store *storeImplementation) InstrumentExists(ctx context.Context, options 
 	return count > 0, nil
 }
 
-// InstrumentCreate creates a new instrument
+// InstrumentCreate creates a new instrument and automatically creates its
+// price tables for each configured timeframe.
 func (store *storeImplementation) InstrumentCreate(ctx context.Context, instrument InstrumentInterface) error {
 	if instrument.CreatedAt() == "" {
 		instrument.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
@@ -256,23 +265,26 @@ func (store *storeImplementation) InstrumentCreate(ctx context.Context, instrume
 		instrument.SetSoftDeletedAt(neat.MaxDateTime)
 	}
 
-	row := map[string]any{
-		COLUMN_ID:              instrument.ID(),
-		COLUMN_SYMBOL:          instrument.Symbol(),
-		COLUMN_EXCHANGE:        instrument.Exchange(),
-		COLUMN_ASSET_CLASS:     instrument.AssetClass(),
-		COLUMN_NAME:            instrument.Name(),
-		COLUMN_STATUS:          instrument.Status(),
-		COLUMN_DESCRIPTION:     instrument.Description(),
-		COLUMN_MEMO:            instrument.Memo(),
-		COLUMN_METAS:           instrument.(*instrumentImplementation).MetasField,
-		COLUMN_TIMEFRAMES:      instrument.(*instrumentImplementation).TimeframesField,
-		COLUMN_CREATED_AT:      instrument.CreatedAtCarbon().StdTime(),
-		COLUMN_UPDATED_AT:      instrument.UpdatedAtCarbon().StdTime(),
-		COLUMN_SOFT_DELETED_AT: instrument.SoftDeletedAtCarbon().StdTime(),
+	row, err := store.instrumentToMap(instrument)
+	if err != nil {
+		return err
 	}
 
-	return store.db.Query().Table(store.instrumentTableName).Create(row)
+	if err := store.db.Query().Table(store.instrumentTableName).Create(row); err != nil {
+		return err
+	}
+
+	// Auto-create price tables for each timeframe of the new instrument
+	for _, timeframe := range instrument.Timeframes() {
+		tableName := store.PriceTableName(instrument.Symbol(), instrument.Exchange(), timeframe)
+		if !store.db.Schema().HasTable(tableName) {
+			if err := store.createPriceTable(tableName); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 // InstrumentDelete deletes an instrument
@@ -401,21 +413,15 @@ func (store *storeImplementation) InstrumentUpdate(ctx context.Context, instrume
 
 	instrument.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 
-	row := map[string]any{
-		COLUMN_SYMBOL:          instrument.Symbol(),
-		COLUMN_EXCHANGE:        instrument.Exchange(),
-		COLUMN_ASSET_CLASS:     instrument.AssetClass(),
-		COLUMN_NAME:            instrument.Name(),
-		COLUMN_STATUS:          instrument.Status(),
-		COLUMN_DESCRIPTION:     instrument.Description(),
-		COLUMN_MEMO:            instrument.Memo(),
-		COLUMN_METAS:           instrument.(*instrumentImplementation).MetasField,
-		COLUMN_TIMEFRAMES:      instrument.(*instrumentImplementation).TimeframesField,
-		COLUMN_UPDATED_AT:      instrument.UpdatedAtCarbon().StdTime(),
-		COLUMN_SOFT_DELETED_AT: instrument.SoftDeletedAtCarbon().StdTime(),
+	row, err := store.instrumentToMap(instrument)
+	if err != nil {
+		return err
 	}
+	// ID and created_at are not updatable
+	delete(row, COLUMN_ID)
+	delete(row, COLUMN_CREATED_AT)
 
-	_, err := store.db.Query().
+	_, err = store.db.Query().
 		Table(store.instrumentTableName).
 		Where(COLUMN_ID+" = ?", instrument.ID()).
 		Update(row)
@@ -564,6 +570,36 @@ func (store *storeImplementation) PriceUpdate(ctx context.Context, symbol string
 }
 
 // == PRIVATE METHODS ==========================================================
+
+// instrumentToMap serializes an instrument to a column map using only the
+// InstrumentInterface methods (no concrete type assertions). Metas are
+// JSON-marshaled and timeframes are comma-joined to match the DB schema.
+func (store *storeImplementation) instrumentToMap(instrument InstrumentInterface) (map[string]any, error) {
+	metas, err := instrument.Metas()
+	if err != nil {
+		return nil, err
+	}
+	metasBytes, err := json.Marshal(metas)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]any{
+		COLUMN_ID:              instrument.ID(),
+		COLUMN_SYMBOL:          instrument.Symbol(),
+		COLUMN_EXCHANGE:        instrument.Exchange(),
+		COLUMN_ASSET_CLASS:     instrument.AssetClass(),
+		COLUMN_NAME:            instrument.Name(),
+		COLUMN_STATUS:          instrument.Status(),
+		COLUMN_DESCRIPTION:     instrument.Description(),
+		COLUMN_MEMO:            instrument.Memo(),
+		COLUMN_METAS:           string(metasBytes),
+		COLUMN_TIMEFRAMES:      strings.Join(instrument.Timeframes(), ","),
+		COLUMN_CREATED_AT:      instrument.CreatedAtCarbon().StdTime(),
+		COLUMN_UPDATED_AT:      instrument.UpdatedAtCarbon().StdTime(),
+		COLUMN_SOFT_DELETED_AT: instrument.SoftDeletedAtCarbon().StdTime(),
+	}, nil
+}
 
 // buildInstrumentQuery returns a query for instruments based on the given query options
 func (store *storeImplementation) buildInstrumentQuery(options InstrumentQueryInterface) contractsorm.Query {
