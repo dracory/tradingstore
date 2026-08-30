@@ -549,3 +549,52 @@ func TestStorePriceUpdate(t *testing.T) {
 		t.Fatal("Price time should remain unchanged")
 	}
 }
+
+// TestPriceCreateDuplicateTimeFails verifies that the UNIQUE(time) constraint
+// prevents inserting two price records with the same timestamp for the same
+// symbol/exchange/timeframe table.
+func TestPriceCreateDuplicateTimeFails(t *testing.T) {
+	store, err := initStore()
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	ctx := context.Background()
+
+	// Create the first price
+	price1 := NewPrice().
+		SetTime("2024-06-01 12:00:00").
+		SetOpen("100.00").
+		SetHigh("105.00").
+		SetLow("99.00").
+		SetClose("102.00").
+		SetVolume("5000")
+
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price1)
+	if err != nil {
+		t.Fatal("unexpected error creating first price:", err)
+	}
+
+	// Create a second price with the SAME timestamp — should fail due to UNIQUE(time)
+	price2 := NewPrice().
+		SetTime("2024-06-01 12:00:00").
+		SetOpen("200.00").
+		SetHigh("205.00").
+		SetLow("199.00").
+		SetClose("202.00").
+		SetVolume("10000")
+
+	err = store.PriceCreate(ctx, "AAPL", "NASDAQ", "1min", price2)
+	if err == nil {
+		t.Fatal("PriceCreate with duplicate timestamp should fail due to UNIQUE(time) constraint, but succeeded")
+	}
+
+	// Verify only one price exists for that timestamp
+	count, errCount := store.PriceCount(ctx, "AAPL", "NASDAQ", "1min", NewPriceQuery().SetTime("2024-06-01 12:00:00"))
+	if errCount != nil {
+		t.Fatal("unexpected error counting prices by time:", errCount)
+	}
+	if count != 1 {
+		t.Fatalf("Expected 1 price at duplicate timestamp, got %d", count)
+	}
+}

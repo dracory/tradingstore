@@ -176,8 +176,13 @@ func (store *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) 
 
 // createPriceTable creates a single price table with the standard OHLCV schema,
 // including an index and unique constraint on the time column.
+//
+// Note: neat's SQLite grammar has a bug where CompileUnique delegates to
+// CompileIndex, producing a regular index instead of a unique one. We work
+// around this by executing a raw CREATE UNIQUE INDEX statement after the
+// schema create.
 func (store *storeImplementation) createPriceTable(tableName string) error {
-	return store.db.Schema().Create(tableName, func(table contractsschema.Blueprint) {
+	if err := store.db.Schema().Create(tableName, func(table contractsschema.Blueprint) {
 		table.String(COLUMN_ID, 40)
 		table.Primary(COLUMN_ID)
 		table.Decimal(COLUMN_OPEN).Total(20).Places(8)
@@ -187,8 +192,27 @@ func (store *storeImplementation) createPriceTable(tableName string) error {
 		table.BigInteger(COLUMN_VOLUME)
 		table.DateTime(COLUMN_TIME)
 		table.Index(COLUMN_TIME)
-		table.Unique(COLUMN_TIME)
-	})
+		// table.Unique(COLUMN_TIME) — omitted due to neat SQLite grammar bug;
+		// see the raw SQL workaround below.
+	}); err != nil {
+		return err
+	}
+
+	// Workaround for neat SQLite grammar bug: table.Unique() generates a
+	// regular CREATE INDEX instead of CREATE UNIQUE INDEX. Create the unique
+	// index via raw SQL instead.
+	uniqueIndexName := tableName + "_" + COLUMN_TIME + "_unique"
+	uniqueIndexSQL := "CREATE UNIQUE INDEX IF NOT EXISTS \"" + uniqueIndexName + "\" ON \"" + tableName + "\" (\"" + COLUMN_TIME + "\")"
+
+	db, err := store.db.DB()
+	if err != nil {
+		return err
+	}
+	if _, err := db.Exec(uniqueIndexSQL); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // MigrateDown drops the trading store tables

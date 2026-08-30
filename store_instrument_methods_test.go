@@ -717,3 +717,121 @@ func TestStoreInstrumentSoftDeleteByID(t *testing.T) {
 		t.Fatal("Instrument should be soft deleted (SoftDeletedAt should be set to now) after soft delete by ID", instrumentSoftDeleted.SoftDeletedAt())
 	}
 }
+
+// TestInstrumentCreateAutoCreatesPriceTables verifies that InstrumentCreate
+// automatically creates price tables for each configured timeframe, without
+// requiring a separate MigrateUp call.
+func TestInstrumentCreateAutoCreatesPriceTables(t *testing.T) {
+	db := initDB(":memory:")
+
+	// Create a store with automigrate enabled — this runs MigrateUp once,
+	// which creates the instrument table but no price tables (no instruments yet).
+	store, err := NewStore(NewStoreOptions{
+		DB:                   db,
+		PriceTableNamePrefix: "price_",
+		InstrumentTableName:  "instrument",
+		UseMultipleExchanges: true,
+		AutomigrateEnabled:   true,
+	})
+	if err != nil {
+		t.Fatal("unexpected error creating store:", err)
+	}
+
+	ctx := context.Background()
+
+	// Create an instrument with specific timeframes.
+	// InstrumentCreate should auto-create the price tables for each timeframe.
+	instrument := NewInstrument().
+		SetSymbol("NVDA").
+		SetExchange("NASDAQ").
+		SetAssetClass(ASSET_CLASS_STOCK).
+		SetTimeframes([]string{TIMEFRAME_1_MINUTE, TIMEFRAME_1_HOUR, TIMEFRAME_1_DAY})
+
+	err = store.InstrumentCreate(ctx, instrument)
+	if err != nil {
+		t.Fatal("unexpected error creating instrument:", err)
+	}
+
+	// Verify price tables were auto-created by inserting a price into each
+	// timeframe table. If the table doesn't exist, PriceCreate will fail.
+	for _, timeframe := range []string{TIMEFRAME_1_MINUTE, TIMEFRAME_1_HOUR, TIMEFRAME_1_DAY} {
+		price := NewPrice().
+			SetTime("2024-01-01 00:00:00").
+			SetOpen("100.00").
+			SetHigh("105.00").
+			SetLow("99.00").
+			SetClose("102.00").
+			SetVolume("5000")
+
+		err = store.PriceCreate(ctx, "NVDA", "NASDAQ", timeframe, price)
+		if err != nil {
+			t.Fatalf("PriceCreate should succeed for timeframe %s (table should be auto-created), got error: %v", timeframe, err)
+		}
+	}
+}
+
+// TestInstrumentCreateWithMetasRoundTrip verifies that metas set on an
+// instrument are correctly serialized via instrumentToMap (JSON-marshaled)
+// and deserialized when retrieved from the database.
+func TestInstrumentCreateWithMetasRoundTrip(t *testing.T) {
+	store, err := initStore()
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	clearInstruments(t, store)
+
+	ctx := context.Background()
+
+	instrument := NewInstrument().
+		SetSymbol("GOOG").
+		SetExchange("NASDAQ").
+		SetAssetClass(ASSET_CLASS_STOCK).
+		SetTimeframes([]string{TIMEFRAME_1_DAY})
+
+	err = instrument.SetMeta("sector", "Technology")
+	if err != nil {
+		t.Fatal("unexpected error setting meta 'sector':", err)
+	}
+	err = instrument.SetMeta("country", "US")
+	if err != nil {
+		t.Fatal("unexpected error setting meta 'country':", err)
+	}
+
+	err = store.InstrumentCreate(ctx, instrument)
+	if err != nil {
+		t.Fatal("unexpected error creating instrument:", err)
+	}
+
+	// Retrieve and verify metas survived the round-trip
+	retrieved, err := store.InstrumentFindByID(ctx, instrument.ID())
+	if err != nil {
+		t.Fatal("unexpected error finding instrument:", err)
+	}
+	if retrieved == nil {
+		t.Fatal("Retrieved instrument should not be nil")
+	}
+
+	metas, err := retrieved.Metas()
+	if err != nil {
+		t.Fatal("unexpected error getting metas:", err)
+	}
+
+	if len(metas) != 2 {
+		t.Fatalf("Expected 2 metas, got %d: %v", len(metas), metas)
+	}
+
+	if metas["sector"] != "Technology" {
+		t.Fatalf("Expected meta 'sector' to be 'Technology', got %q", metas["sector"])
+	}
+
+	if metas["country"] != "US" {
+		t.Fatalf("Expected meta 'country' to be 'US', got %q", metas["country"])
+	}
+
+	// Verify timeframes also survived the round-trip
+	timeframes := retrieved.Timeframes()
+	if len(timeframes) != 1 || timeframes[0] != TIMEFRAME_1_DAY {
+		t.Fatalf("Expected timeframes [1day], got %v", timeframes)
+	}
+}
