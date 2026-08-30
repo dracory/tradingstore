@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dracory/neat"
 	"github.com/dracory/neat/database/orm"
 	"github.com/dracory/neat/database/soft_delete"
 	neatuid "github.com/dracory/neat/support/uid"
@@ -101,7 +102,7 @@ func NewInstrument() InstrumentInterface {
 	o.SetTimeframes([]string{})
 	o.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 	o.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
-	o.SetSoftDeletedAt(MAX_DATETIME)
+	o.SetSoftDeletedAt(neat.MaxDateTime)
 	return o
 }
 

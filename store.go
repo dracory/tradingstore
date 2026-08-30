@@ -253,7 +253,7 @@ func (store *storeImplementation) InstrumentCreate(ctx context.Context, instrume
 		instrument.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 	}
 	if instrument.SoftDeletedAt() == "" {
-		instrument.SetSoftDeletedAt(MAX_DATETIME)
+		instrument.SetSoftDeletedAt(neat.MaxDateTime)
 	}
 
 	row := map[string]any{
