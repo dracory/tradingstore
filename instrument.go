@@ -8,8 +8,8 @@ import (
 	"github.com/dracory/neat"
 	"github.com/dracory/neat/database/orm"
 	"github.com/dracory/neat/database/soft_delete"
-	neatuid "github.com/dracory/neat/support/uid"
 	"github.com/dromara/carbon/v2"
+	"uuid"
 )
 
 // InstrumentInterface defines the interface for a financial instrument.
@@ -69,7 +69,7 @@ var _ InstrumentInterface = (*instrumentImplementation)(nil)
 // == TYPE =====================================================================
 
 type instrumentImplementation struct {
-	orm.ShortID
+	orm.StringID
 
 	SymbolField      string `db:"symbol"`
 	ExchangeField    string `db:"exchange"`
@@ -91,7 +91,7 @@ type instrumentImplementation struct {
 // NewInstrument creates a new instrument with default values.
 func NewInstrument() InstrumentInterface {
 	o := &instrumentImplementation{}
-	o.SetID(neatuid.GenerateShortID())
+	o.SetID(uuid.NewV7().String())
 	o.SetName("")
 	o.SetStatus(INSTRUMENT_STATUS_DRAFT)
 	o.SetAssetClass(ASSET_CLASS_UNKNOWN)
@@ -149,11 +149,11 @@ func (instrument *instrumentImplementation) IsSoftDeleted() bool {
 // == SETTERS & GETTERS ========================================================
 
 func (instrument *instrumentImplementation) ID() string {
-	return instrument.ShortID.ID
+	return instrument.StringID.ID
 }
 
 func (instrument *instrumentImplementation) SetID(id string) InstrumentInterface {
-	instrument.ShortID.ID = id
+	instrument.StringID.ID = id
 	return instrument
 }
 

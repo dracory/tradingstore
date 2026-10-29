@@ -2,9 +2,9 @@ package tradingstore
 
 import (
 	"github.com/dracory/neat/database/orm"
-	neatuid "github.com/dracory/neat/support/uid"
 	"github.com/dromara/carbon/v2"
 	"github.com/spf13/cast"
+	"uuid"
 )
 
 // PriceInterface defines the interface for an OHLCV price record.
@@ -42,7 +42,7 @@ var _ PriceInterface = (*priceImplementation)(nil)
 // == TYPE =====================================================================
 
 type priceImplementation struct {
-	orm.ShortID
+	orm.StringID
 
 	OpenField   string `db:"open"`
 	HighField   string `db:"high"`
@@ -57,7 +57,7 @@ type priceImplementation struct {
 // NewPrice creates a new price with default values.
 func NewPrice() PriceInterface {
 	o := &priceImplementation{}
-	o.SetID(neatuid.GenerateShortID())
+	o.SetID(uuid.NewV7().String())
 	return o
 }
 
@@ -118,11 +118,11 @@ func (price *priceImplementation) SetLow(low string) PriceInterface {
 }
 
 func (price *priceImplementation) ID() string {
-	return price.ShortID.ID
+	return price.StringID.ID
 }
 
 func (price *priceImplementation) SetID(id string) PriceInterface {
-	price.ShortID.ID = id
+	price.StringID.ID = id
 	return price
 }
 
